@@ -10,9 +10,6 @@ import projectRoutes from "./routes/projectRoutes.js";
 
 dotenv.config();
 const app = express();
-
-import cors from "cors";
-
 const allowedOrigins = ["https://brick-com-admin.vercel.app"];
 
 app.use(
