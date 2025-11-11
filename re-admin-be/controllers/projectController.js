@@ -10,6 +10,8 @@ const DOCUMENTS_FOLDER = "project-documents";
 
 // Helpers
 const toBool = (v) => v === true || v === "true" || v === "1";
+const asArray = (val) => (Array.isArray(val) ? val : val ? [val] : []);
+
 const toInt = (v, d = 0) => {
   const n = Number(v);
   return Number.isFinite(n) ? n : d;
@@ -86,9 +88,13 @@ export async function createProject(req, res) {
       documents: [],
     };
 
+    const heroImages = asArray(f.hero_image);
+    const additionalImages = asArray(f.images);
+    const documents = asArray(f.documents);
+
     // Hero image upload
-    if (f.hero_image?.[0]) {
-      const file = f.hero_image[0];
+    if (heroImages.length) {
+      const file = heroImages[0];
       const { url, error } = await uploadImageBuffer(
         BUCKET,
         HERO_FOLDER,
@@ -105,33 +111,29 @@ export async function createProject(req, res) {
     }
 
     // Additional images
-    if (f.images?.length) {
-      for (const file of f.images) {
-        const { url, error } = await uploadImageBuffer(
-          BUCKET,
-          IMAGES_FOLDER,
-          file.buffer,
-          file.originalname,
-          file.mimetype
-        );
-        if (error) continue;
-        toInsert.images.push(url);
-      }
+    for (const file of additionalImages) {
+      const { url, error } = await uploadImageBuffer(
+        BUCKET,
+        IMAGES_FOLDER,
+        file.buffer,
+        file.originalname,
+        file.mimetype
+      );
+      if (error) continue;
+      toInsert.images.push(url);
     }
 
     // Documents
-    if (f.documents?.length) {
-      for (const file of f.documents) {
-        const { url, error } = await uploadImageBuffer(
-          BUCKET,
-          DOCUMENTS_FOLDER,
-          file.buffer,
-          file.originalname,
-          file.mimetype
-        );
-        if (error) continue;
-        toInsert.documents.push(url);
-      }
+    for (const file of documents) {
+      const { url, error } = await uploadImageBuffer(
+        BUCKET,
+        DOCUMENTS_FOLDER,
+        file.buffer,
+        file.originalname,
+        file.mimetype
+      );
+      if (error) continue;
+      toInsert.documents.push(url);
     }
 
     const created = await projectRepo.insert(toInsert);
@@ -153,6 +155,9 @@ export async function updateProject(req, res) {
     const { id } = req.params;
     const b = req.body || {};
     const f = req.files || {};
+    const heroImages = asArray(f.hero_image);
+    const additionalImages = asArray(f.images);
+    const documents = asArray(f.documents);
 
     const patch = {
       title: b.title ?? undefined,
@@ -172,8 +177,8 @@ export async function updateProject(req, res) {
     if (toBool(b.remove_hero)) patch.hero_image = null;
 
     // Hero image replacement
-    if (f.hero_image?.[0]) {
-      const file = f.hero_image[0];
+    if (heroImages.length) {
+      const file = heroImages[0];
       const { url, error } = await uploadImageBuffer(
         BUCKET,
         HERO_FOLDER,
@@ -191,32 +196,27 @@ export async function updateProject(req, res) {
 
     // Append new images
     const appendImages = [];
-    if (f.images?.length) {
-      for (const file of f.images) {
-        const { url, error } = await uploadImageBuffer(
-          BUCKET,
-          IMAGES_FOLDER,
-          file.buffer,
-          file.originalname,
-          file.mimetype
-        );
-        if (url) appendImages.push(url);
-      }
+    for (const file of additionalImages) {
+      const { url, error } = await uploadImageBuffer(
+        BUCKET,
+        IMAGES_FOLDER,
+        file.buffer,
+        file.originalname,
+        file.mimetype
+      );
+      if (url) appendImages.push(url);
     }
-
     // Append new documents
     const appendDocs = [];
-    if (f.documents?.length) {
-      for (const file of f.documents) {
-        const { url, error } = await uploadImageBuffer(
-          BUCKET,
-          DOCUMENTS_FOLDER,
-          file.buffer,
-          file.originalname,
-          file.mimetype
-        );
-        if (url) appendDocs.push(url);
-      }
+    for (const file of documents) {
+      const { url, error } = await uploadImageBuffer(
+        BUCKET,
+        DOCUMENTS_FOLDER,
+        file.buffer,
+        file.originalname,
+        file.mimetype
+      );
+      if (url) appendDocs.push(url);
     }
 
     const updated = await projectRepo.update(
@@ -344,7 +344,8 @@ export async function uploadProjectImages(req, res) {
         .status(400)
         .json({ data: null, error: { message: "No files uploaded" } });
     const urls = [];
-    for (const file of req.files) {
+    const images = asArray(req.files);
+    for (const file of images) {
       const { url, error } = await uploadImageBuffer(
         BUCKET,
         IMAGES_FOLDER,
@@ -375,7 +376,9 @@ export async function uploadProjectDocuments(req, res) {
         .status(400)
         .json({ data: null, error: { message: "No files uploaded" } });
     const urls = [];
-    for (const file of req.files) {
+    const files = asArray(req.files);
+    
+    for (const file of files) {
       const { url, error } = await uploadImageBuffer(
         BUCKET,
         DOCUMENTS_FOLDER,

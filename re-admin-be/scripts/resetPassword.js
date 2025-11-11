@@ -30,4 +30,4 @@ async function resetUserPassword(email, newPassword) {
 }
 
 // Usage
-resetUserPassword("charanreddy@brick.com", "pichi123");
+resetUserPassword("charanreddy@brick.com", "cherry123");
