@@ -15,10 +15,10 @@ dotenv.config();
 const app = express();
 
 const allowedOrigins = [
-  "https://admin.savingharbor.com",
-  "https://admin.savingharbor.vercel.app",
-  "https://dev-admin.savingharbor.com",
-  "http://localhost:4231",
+  // "https://admin.savingharbor.com",
+  // "https://admin.savingharbor.vercel.app",
+  // "https://dev-admin.savingharbor.com",
+  "https://brick-com-admin.vercel.app",
 ];
 
 // const corsOptions = {
