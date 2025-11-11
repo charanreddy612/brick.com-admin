@@ -44,7 +44,7 @@ export async function ensureUniqueSlugOnUpdate(id, proposed) {
   return `${seed}-${Date.now()}`;
 }
 
-// List with filters + pagination
+// List developers with optional name and city filters + pagination
 export async function list({
   name = "",
   city = "",
@@ -54,41 +54,72 @@ export async function list({
   const from = (page - 1) * limit;
   const to = from + limit - 1;
 
-  const selectCols = `
-    id,
-    name,
-    slug,
-    email,
-    phone,
-    cities,
-    active,
-    photo_url,
-    created_at,
-    updated_at
-  `;
+  try {
+    // 1️⃣ Filter developer IDs by city if city filter is provided
+    let developerIdsByCity = null;
+    if (city) {
+      const { data: devCities, error: devCitiesErr } = await supabase
+        .from("developer_cities")
+        .select("developer_id")
+        .eq("city", city);
+      if (devCitiesErr) throw devCitiesErr;
+      developerIdsByCity = devCities.map((dc) => dc.developer_id);
+      if (!developerIdsByCity.length) {
+        // No developers match this city
+        return { rows: [], total: 0 };
+      }
+    }
 
-  // Count total
-  let countQuery = supabase
-    .from("developers")
-    .select("id", { count: "exact", head: true });
-  if (name) countQuery = countQuery.ilike("name", `%${name}%`);
-  if (city) countQuery = countQuery.cs("cities", [city]); // Supabase array contains
-  const { count, error: countErr } = await countQuery;
-  if (countErr) throw countErr;
+    // 2️⃣ Count total developers matching filters
+    let countQuery = supabase
+      .from("developers")
+      .select("id", { count: "exact", head: true });
+    if (name) countQuery = countQuery.ilike("name", `%${name}%`);
+    if (developerIdsByCity)
+      countQuery = countQuery.in("id", developerIdsByCity);
 
-  // Fetch data
-  let query = supabase
-    .from("developers")
-    .select(selectCols)
-    .order("created_at", { ascending: false })
-    .range(from, to);
-  if (name) query = query.ilike("name", `%${name}%`);
-  if (city) query = query.cs("cities", [city]);
+    const { count, error: countErr } = await countQuery;
+    if (countErr) throw countErr;
 
-  const { data, error } = await query;
-  if (error) throw error;
+    // 3️⃣ Fetch developer data
+    let query = supabase
+      .from("developers")
+      .select(
+        `
+        id,
+        name,
+        slug,
+        email,
+        phone,
+        active,
+        photo_url,
+        created_at,
+        updated_at,
+        developer_cities (city)
+      `
+      )
+      .order("created_at", { ascending: false })
+      .range(from, to);
 
-  return { rows: data || [], total: count || 0 };
+    if (name) query = query.ilike("name", `%${name}%`);
+    if (developerIdsByCity) query = query.in("id", developerIdsByCity);
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    // 4️⃣ Map cities to array for each developer
+    const rows = (data || []).map((dev) => ({
+      ...dev,
+      cities: dev.developer_cities
+        ? dev.developer_cities.map((dc) => dc.city)
+        : [],
+    }));
+
+    return { rows, total: count || 0 };
+  } catch (err) {
+    console.error("Developer list fetch error:", err);
+    throw err;
+  }
 }
 
 // Get by ID
