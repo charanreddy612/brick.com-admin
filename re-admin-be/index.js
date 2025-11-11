@@ -21,69 +21,23 @@ const allowedOrigins = [
   "https://brick-com-admin.vercel.app",
 ];
 
-// const corsOptions = {
-//   origin: function (origin, callback) {
-//     if (!origin) return callback(null, true); // allow non-browser requests
-//     return allowedOrigins.includes(origin)
-//       ? callback(null, true)
-//       : callback(null, false);
-//   },
-//   methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-//   allowedHeaders: ["Content-Type", "Authorization", "Accept"],
-//   credentials: true,
-//   optionsSuccessStatus: 204,
-// };
-
-// app.use(cors(corsOptions));
-// app.options("/api/auth/login", cors());
-
-// // safety fallback for routes that somehow bypass CORS middleware
-// app.use((req, res, next) => {
-//   const origin = req.get("Origin");
-//   if (origin && allowedOrigins.includes(origin)) {
-//     res.setHeader("Access-Control-Allow-Origin", origin);
-//     res.setHeader("Access-Control-Allow-Credentials", "true");
-//   }
-//   next();
-// });
-
 const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // allow non-browser requests (like Postman)
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error("Not allowed by CORS"));
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true); // allow non-browser requests
+    return allowedOrigins.includes(origin)
+      ? callback(null, true)
+      : callback(null, false);
   },
   methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Accept"],
-  credentials: true, // allow cookies/auth headers
+  credentials: true,
   optionsSuccessStatus: 204,
 };
 
-// Apply CORS middleware globally
 app.use(cors(corsOptions));
-// app.options("/api/auth/login", cors(corsOptions)); // handle preflight for all routes
-// Handle preflight for all routes
-app.use((req, res, next) => {
-  if (req.method === "OPTIONS") {
-    const origin = req.get("Origin");
-    if (origin && allowedOrigins.includes(origin)) {
-      res.setHeader("Access-Control-Allow-Origin", origin);
-      res.setHeader("Access-Control-Allow-Credentials", "true");
-      res.setHeader(
-        "Access-Control-Allow-Methods",
-        "GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS"
-      );
-      res.setHeader(
-        "Access-Control-Allow-Headers",
-        "Content-Type,Authorization,Accept"
-      );
-      return res.sendStatus(204);
-    }
-  }
-  next();
-});
+app.options("/api/auth/login", cors());
 
-// Optional: fallback for any manual headers
+// safety fallback for routes that somehow bypass CORS middleware
 app.use((req, res, next) => {
   const origin = req.get("Origin");
   if (origin && allowedOrigins.includes(origin)) {
