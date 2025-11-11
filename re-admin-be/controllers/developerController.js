@@ -7,8 +7,6 @@ const FOLDER = "developers";
 
 // Helpers
 const toBool = (v) => v === true || v === "true" || v === "1";
-const asArray = (val) => (Array.isArray(val) ? val : val ? [val] : []);
-
 const toInt = (v, d = 0) => {
   const n = Number(v);
   return Number.isFinite(n) ? n : d;
@@ -81,10 +79,9 @@ export async function createDeveloper(req, res) {
       active: toBool(b.active),
     };
 
-    const photos = asArray(f.logo);
     // Optional photo
-    if (photos.length) {
-      const file = photos[0];
+    if (f.logo?.[0]) {
+      const file = f.logo[0];
       const { url, error } = await uploadImageBuffer(
         BUCKET,
         FOLDER,
@@ -130,10 +127,9 @@ export async function updateDeveloper(req, res) {
     // Photo removal
     if (toBool(b.remove_photo)) patch.logo_url = null;
 
-    const photos = asArray(f.logo);
     // New photo upload
-    if (photos.length) {
-      const file = photos[0];
+    if (f.logo?.[0]) {
+      const file = f.logo[0];
       const { url, error } = await uploadImageBuffer(
         BUCKET,
         FOLDER,

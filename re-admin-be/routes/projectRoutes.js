@@ -16,8 +16,6 @@ router.post(
   "/",
   uploadMemory.fields([
     { name: "hero_image", maxCount: 1 },
-    { name: "images", maxCount: 10 },
-    { name: "documents", maxCount: 10 },
   ]),
   projectController.createProject
 );
@@ -27,8 +25,6 @@ router.put(
   "/:id",
   uploadMemory.fields([
     { name: "hero_image", maxCount: 1 },
-    { name: "images", maxCount: 10 },
-    { name: "documents", maxCount: 10 },
   ]),
   projectController.updateProject
 );
