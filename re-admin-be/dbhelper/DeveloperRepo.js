@@ -92,7 +92,7 @@ export async function list({
         email,
         phone,
         active,
-        photo_url,
+        logo_url,
         created_at,
         updated_at,
         developer_cities (city)
@@ -132,7 +132,7 @@ export async function getById(id) {
     phone,
     cities,
     active,
-    photo_url,
+    logo_url,
     created_at,
     updated_at
   `;

@@ -94,7 +94,7 @@ export async function createDeveloper(req, res) {
           data: null,
           error: { message: "Photo upload failed", details: error },
         });
-      toInsert.photo_url = url;
+      toInsert.logo_url = url;
     }
 
     const created = await developerRepo.insert(toInsert);
@@ -125,7 +125,7 @@ export async function updateDeveloper(req, res) {
     };
 
     // Photo removal
-    if (toBool(b.remove_photo)) patch.photo_url = null;
+    if (toBool(b.remove_photo)) patch.logo_url = null;
 
     // New photo upload
     if (f.photo?.[0]) {
@@ -142,7 +142,7 @@ export async function updateDeveloper(req, res) {
           data: null,
           error: { message: "Photo upload failed", details: error },
         });
-      patch.photo_url = url;
+      patch.logo_url = url;
     }
 
     const updated = await developerRepo.update(id, patch);
@@ -194,7 +194,7 @@ export async function deleteDeveloper(req, res) {
         .json({ data: null, error: { message: "Developer not found" } });
 
     // Delete photo if exists
-    const urls = [dev.photo_url].filter(Boolean);
+    const urls = [dev.logo_url].filter(Boolean);
     try {
       if (urls.length) await deleteFilesByUrls(BUCKET, urls);
     } catch (fileErr) {
