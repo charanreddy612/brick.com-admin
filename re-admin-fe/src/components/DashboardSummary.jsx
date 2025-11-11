@@ -8,8 +8,8 @@ export default function DashboardSummary() {
     (async () => {
       const data = await fetchDashboardSummary();
       setStats([
-        { label: "Total Developers", value: data.totalStores },
-        { label: "Top Projects", value: data.topCoupons },
+        { label: "Total Developers", value: data.totalDevelopers },
+        { label: "Top Projects", value: data.totalProjects },
         { label: "Published Blogs", value: data.publishedBlogs },
       ]);
     })();

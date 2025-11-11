@@ -4,9 +4,6 @@ import cors from "cors";
 import path from "path";
 import authRoutes from "./routes/authRoutes.js";
 import sidebarRoutes from "./routes/sidebarRoutes.js";
-import blogRoutes from "./routes/blogRoutes.js";
-import blogCategoryRoutes from "./routes/blogCategoryRoutes.js";
-import merchantRoutes from "./routes/merchantRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import developerRoutes from "./routes/developerRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
@@ -49,8 +46,6 @@ app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/sidebar", sidebarRoutes);
-// app.use("/api/blogs", blogRoutes);
-// app.use("/api/blog-categories", blogCategoryRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/developers", developerRoutes);
 app.use("/api/projects", projectRoutes); // match frontend service

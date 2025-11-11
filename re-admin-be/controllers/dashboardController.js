@@ -1,20 +1,20 @@
 // controllers/dashboardController.js
-import * as merchantRepo from "../dbhelper/MerchantRepo.js";
-import * as couponRepo from "../dbhelper/CouponsRepo.js";
+import * as projectRepo from "../dbhelper/ProjectRepo.js";
+import * as developerRepo from "../dbhelper/DeveloperRepo.js";
 import * as blogRepo from "../dbhelper/BlogRepo.js";
 
 export async function getSummary(req, res) {
   try {
-    const [stores, coupons, blogs] = await Promise.all([
-      merchantRepo.count(),
-      couponRepo.countTopCoupons(),
-      blogRepo.countPublished(),
+    const [projects, developers, blogs] = await Promise.all([
+      projectRepo.count(), // total projects
+      developerRepo.count(), // total developers
+      blogRepo.countPublished(), // published blogs remain
     ]);
 
     return res.json({
       data: {
-        totalStores: stores,
-        topCoupons: coupons,
+        totalProjects: projects,
+        totalDevelopers: developers,
         publishedBlogs: blogs,
       },
       error: null,
