@@ -52,7 +52,7 @@ app.use("/api/sidebar", sidebarRoutes);
 // app.use("/api/blogs", blogRoutes);
 // app.use("/api/blog-categories", blogCategoryRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/developer", developerRoutes);
+app.use("/api/developers", developerRoutes);
 app.use("/api/projects", projectRoutes); // match frontend service
 
 // Root
