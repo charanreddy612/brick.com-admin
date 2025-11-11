@@ -14,45 +14,39 @@ import projectRoutes from "./routes/projectRoutes.js";
 dotenv.config();
 const app = express();
 
-const allowedOrigins = [
-  // "https://admin.savingharbor.com",
-  // "https://admin.savingharbor.vercel.app",
-  // "https://dev-admin.savingharbor.com",
-  "https://brick-com-admin.vercel.app",
-];
+// Allowed origins
+const allowedOrigins = ["https://brick-com-admin.vercel.app"];
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true); // allow non-browser requests
-    return allowedOrigins.includes(origin)
-      ? callback(null, true)
-      : callback(null, false);
-  },
-  methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "Accept"],
-  credentials: true,
-  optionsSuccessStatus: 204,
-};
-
-app.use(cors(corsOptions));
-app.options("/api/auth/login", cors());
-
-// safety fallback for routes that somehow bypass CORS middleware
+// ---------------- CORS ----------------
 app.use((req, res, next) => {
   const origin = req.get("Origin");
   if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.header("Access-Control-Allow-Origin", origin);
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header(
+      "Access-Control-Allow-Methods",
+      "GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS"
+    );
+    res.header(
+      "Access-Control-Allow-Headers",
+      "Content-Type,Authorization,Accept"
+    );
+  }
+  if (req.method === "OPTIONS") {
+    // Preflight request
+    return res.sendStatus(204);
   }
   next();
 });
 
+// Body parsing
 app.use(express.json({ limit: process.env.JSON_LIMIT || "1mb" }));
 app.use(express.urlencoded({ extended: true }));
 
+// Static uploads
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
-// Admin/API routes (deduped)
+// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/merchants", merchantRoutes);
 app.use("/api/sidebar", sidebarRoutes);
@@ -60,25 +54,23 @@ app.use("/api/blogs", blogRoutes);
 app.use("/api/blog-categories", blogCategoryRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/developer", developerRoutes);
-app.use("/api/project", projectRoutes);
+app.use("/api/projects", projectRoutes); // match frontend service
 
+// Root
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to Brick.com Admin Backend" });
 });
 
-// 404 (after routes)
+// 404
 app.use((req, res) => {
   res.status(404).json({ error: "Not Found" });
 });
 
-// Error handler (last)
+// Error handler
 app.use((err, req, res, next) => {
-  // Avoid leaking stack to client in prod
   const status = err.status || 500;
   const message = status === 500 ? "Internal Server Error" : err.message;
-  if (process.env.NODE_ENV !== "test") {
-    console.error(err);
-  }
+  console.error(err);
   res.status(status).json({ error: message });
 });
 
