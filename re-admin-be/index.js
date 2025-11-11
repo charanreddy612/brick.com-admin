@@ -48,10 +48,9 @@ app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // Routes
 app.use("/api/auth", authRoutes);
-app.use("/api/merchants", merchantRoutes);
 app.use("/api/sidebar", sidebarRoutes);
-app.use("/api/blogs", blogRoutes);
-app.use("/api/blog-categories", blogCategoryRoutes);
+// app.use("/api/blogs", blogRoutes);
+// app.use("/api/blog-categories", blogCategoryRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/developer", developerRoutes);
 app.use("/api/projects", projectRoutes); // match frontend service

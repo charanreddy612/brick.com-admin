@@ -30,8 +30,10 @@ console.log('Login request:', req.body);
     if (!data.password_hash) {
       return res.status(500).json({ message: "Password not set for user" });
     }
-    // Compare password with hash
+    
     const isMatch = await bcrypt.compare(password, data.password_hash);
+    console.log("bcrypt.compare result:", isMatch);
+    
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
