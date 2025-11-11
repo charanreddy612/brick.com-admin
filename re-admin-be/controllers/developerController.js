@@ -81,7 +81,7 @@ export async function createDeveloper(req, res) {
       active: toBool(b.active),
     };
 
-    const photos = asArray(f.photo);
+    const photos = asArray(f.logo);
     // Optional photo
     if (photos.length) {
       const file = photos[0];
@@ -130,7 +130,7 @@ export async function updateDeveloper(req, res) {
     // Photo removal
     if (toBool(b.remove_photo)) patch.logo_url = null;
 
-    const photos = asArray(f.photo);
+    const photos = asArray(f.logo);
     // New photo upload
     if (photos.length) {
       const file = photos[0];
