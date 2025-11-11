@@ -10,8 +10,6 @@ const DOCUMENTS_FOLDER = "project-documents";
 
 // Helpers
 const toBool = (v) => v === true || v === "true" || v === "1";
-const asArray = (val) => (Array.isArray(val) ? val : val ? [val] : []);
-
 const toInt = (v, d = 0) => {
   const n = Number(v);
   return Number.isFinite(n) ? n : d;
@@ -24,6 +22,7 @@ const parseJSON = (raw, fallback) => {
     return fallback;
   }
 };
+const safeArray = (val) => (Array.isArray(val) ? val : val ? [val] : []);
 
 // List + filters + pagination
 export async function listProjects(req, res) {
@@ -35,13 +34,15 @@ export async function listProjects(req, res) {
     const { rows, total } = await projectRepo.list({ title, page, limit });
     return res.json({ data: { rows, total }, error: null });
   } catch (err) {
-    return res.status(500).json({
-      data: null,
-      error: {
-        message: "Error listing projects",
-        details: err?.message || err,
-      },
-    });
+    return res
+      .status(500)
+      .json({
+        data: null,
+        error: {
+          message: "Error listing projects",
+          details: err?.message || err,
+        },
+      });
   }
 }
 
@@ -54,16 +55,17 @@ export async function getProject(req, res) {
       return res
         .status(404)
         .json({ data: null, error: { message: "Project not found" } });
-
     return res.json({ data, error: null });
   } catch (err) {
-    return res.status(500).json({
-      data: null,
-      error: {
-        message: "Error fetching project",
-        details: err?.message || err,
-      },
-    });
+    return res
+      .status(500)
+      .json({
+        data: null,
+        error: {
+          message: "Error fetching project",
+          details: err?.message || err,
+        },
+      });
   }
 }
 
@@ -88,76 +90,78 @@ export async function createProject(req, res) {
       documents: [],
     };
 
-    const heroImages = asArray(f.hero_image);
-    const additionalImages = asArray(f.images);
-    const documents = asArray(f.documents);
+    const heroImages = safeArray(f.hero_image);
+    const additionalImages = safeArray(f.images);
+    const documents = safeArray(f.documents);
 
     // Hero image upload
     if (heroImages.length) {
-      const file = heroImages[0];
       const { url, error } = await uploadImageBuffer(
         BUCKET,
         HERO_FOLDER,
-        file.buffer,
-        file.originalname,
-        file.mimetype
+        heroImages[0].buffer,
+        heroImages[0].originalname,
+        heroImages[0].mimetype
       );
       if (error)
-        return res.status(500).json({
-          data: null,
-          error: { message: "Hero image upload failed", details: error },
-        });
+        return res
+          .status(500)
+          .json({
+            data: null,
+            error: { message: "Hero image upload failed", details: error },
+          });
       toInsert.hero_image = url;
     }
 
     // Additional images
     for (const file of additionalImages) {
-      const { url, error } = await uploadImageBuffer(
+      const { url } = await uploadImageBuffer(
         BUCKET,
         IMAGES_FOLDER,
         file.buffer,
         file.originalname,
         file.mimetype
       );
-      if (error) continue;
-      toInsert.images.push(url);
+      if (url) toInsert.images.push(url);
     }
 
     // Documents
     for (const file of documents) {
-      const { url, error } = await uploadImageBuffer(
+      const { url } = await uploadImageBuffer(
         BUCKET,
         DOCUMENTS_FOLDER,
         file.buffer,
         file.originalname,
         file.mimetype
       );
-      if (error) continue;
-      toInsert.documents.push(url);
+      if (url) toInsert.documents.push(url);
     }
 
     const created = await projectRepo.insert(toInsert);
     return res.status(201).json({ data: created, error: null });
   } catch (err) {
-    return res.status(500).json({
-      data: null,
-      error: {
-        message: "Error creating project",
-        details: err?.message || err,
-      },
-    });
+    return res
+      .status(500)
+      .json({
+        data: null,
+        error: {
+          message: "Error creating project",
+          details: err?.message || err,
+        },
+      });
   }
 }
 
-// Update (multipart, append images/docs)
+// Update (multipart)
 export async function updateProject(req, res) {
   try {
     const { id } = req.params;
     const b = req.body || {};
     const f = req.files || {};
-    const heroImages = asArray(f.hero_image);
-    const additionalImages = asArray(f.images);
-    const documents = asArray(f.documents);
+
+    const heroImages = safeArray(f.hero_image);
+    const additionalImages = safeArray(f.images);
+    const documents = safeArray(f.documents);
 
     const patch = {
       title: b.title ?? undefined,
@@ -173,31 +177,30 @@ export async function updateProject(req, res) {
       meta: b.meta !== undefined ? parseJSON(b.meta, {}) : undefined,
     };
 
-    // Hero image removal
+    // Hero removal / replacement
     if (toBool(b.remove_hero)) patch.hero_image = null;
-
-    // Hero image replacement
-    if (heroImages.length) {
-      const file = heroImages[0];
+    else if (heroImages.length) {
       const { url, error } = await uploadImageBuffer(
         BUCKET,
         HERO_FOLDER,
-        file.buffer,
-        file.originalname,
-        file.mimetype
+        heroImages[0].buffer,
+        heroImages[0].originalname,
+        heroImages[0].mimetype
       );
       if (error)
-        return res.status(500).json({
-          data: null,
-          error: { message: "Hero image upload failed", details: error },
-        });
+        return res
+          .status(500)
+          .json({
+            data: null,
+            error: { message: "Hero image upload failed", details: error },
+          });
       patch.hero_image = url;
     }
 
-    // Append new images
+    // Append images
     const appendImages = [];
     for (const file of additionalImages) {
-      const { url, error } = await uploadImageBuffer(
+      const { url } = await uploadImageBuffer(
         BUCKET,
         IMAGES_FOLDER,
         file.buffer,
@@ -206,10 +209,11 @@ export async function updateProject(req, res) {
       );
       if (url) appendImages.push(url);
     }
-    // Append new documents
+
+    // Append documents
     const appendDocs = [];
     for (const file of documents) {
-      const { url, error } = await uploadImageBuffer(
+      const { url } = await uploadImageBuffer(
         BUCKET,
         DOCUMENTS_FOLDER,
         file.buffer,
@@ -232,13 +236,15 @@ export async function updateProject(req, res) {
 
     return res.json({ data: updated, error: null });
   } catch (err) {
-    return res.status(500).json({
-      data: null,
-      error: {
-        message: "Error updating project",
-        details: err?.message || err,
-      },
-    });
+    return res
+      .status(500)
+      .json({
+        data: null,
+        error: {
+          message: "Error updating project",
+          details: err?.message || err,
+        },
+      });
   }
 }
 
@@ -251,16 +257,17 @@ export async function updateProjectStatus(req, res) {
       return res
         .status(404)
         .json({ data: null, error: { message: "Project not found" } });
-
     return res.json({ data: updated, error: null });
   } catch (err) {
-    return res.status(500).json({
-      data: null,
-      error: {
-        message: "Error updating project status",
-        details: err?.message || err,
-      },
-    });
+    return res
+      .status(500)
+      .json({
+        data: null,
+        error: {
+          message: "Error updating project status",
+          details: err?.message || err,
+        },
+      });
   }
 }
 
@@ -274,13 +281,11 @@ export async function deleteProject(req, res) {
         .status(404)
         .json({ data: null, error: { message: "Project not found" } });
 
-    // Delete hero, images, documents
     const urls = [
       project.hero_image,
       ...(project.images || []),
       ...(project.documents || []),
     ].filter(Boolean);
-
     try {
       if (urls.length) await deleteFilesByUrls(BUCKET, urls);
     } catch (fileErr) {
@@ -298,105 +303,14 @@ export async function deleteProject(req, res) {
 
     return res.json({ data: { id, deleted_files: urls.length }, error: null });
   } catch (err) {
-    return res.status(500).json({
-      data: null,
-      error: {
-        message: "Error deleting project",
-        details: err?.message || err,
-      },
-    });
-  }
-}
-
-// Upload hero image
-export async function uploadHeroImage(req, res) {
-  try {
-    if (!req.file)
-      return res
-        .status(400)
-        .json({ data: null, error: { message: "No file uploaded" } });
-    const file = req.file;
-    const { url, error } = await uploadImageBuffer(
-      BUCKET,
-      HERO_FOLDER,
-      file.buffer,
-      file.originalname,
-      file.mimetype
-    );
-    if (error) throw error;
-    return res.json({ data: { url }, error: null });
-  } catch (err) {
-    return res.status(500).json({
-      data: null,
-      error: {
-        message: "Hero image upload failed",
-        details: err.message || err,
-      },
-    });
-  }
-}
-
-// Upload multiple images
-export async function uploadProjectImages(req, res) {
-  try {
-    if (!req.files || req.files.length === 0)
-      return res
-        .status(400)
-        .json({ data: null, error: { message: "No files uploaded" } });
-    const urls = [];
-    const images = asArray(req.files);
-    for (const file of images) {
-      const { url, error } = await uploadImageBuffer(
-        BUCKET,
-        IMAGES_FOLDER,
-        file.buffer,
-        file.originalname,
-        file.mimetype
-      );
-      if (error) throw error;
-      urls.push(url);
-    }
-    return res.json({ data: urls, error: null });
-  } catch (err) {
-    return res.status(500).json({
-      data: null,
-      error: {
-        message: "Project images upload failed",
-        details: err.message || err,
-      },
-    });
-  }
-}
-
-// Upload documents
-export async function uploadProjectDocuments(req, res) {
-  try {
-    if (!req.files || req.files.length === 0)
-      return res
-        .status(400)
-        .json({ data: null, error: { message: "No files uploaded" } });
-    const urls = [];
-    const files = asArray(req.files);
-    
-    for (const file of files) {
-      const { url, error } = await uploadImageBuffer(
-        BUCKET,
-        DOCUMENTS_FOLDER,
-        file.buffer,
-        file.originalname,
-        file.mimetype
-      );
-      if (error) throw error;
-      urls.push(url);
-    }
-    return res.json({ data: urls, error: null });
-  } catch (err) {
-    return res.status(500).json({
-      data: null,
-      error: {
-        message: "Document upload failed",
-        details: err.message || err,
-      },
-    });
+    return res
+      .status(500)
+      .json({
+        data: null,
+        error: {
+          message: "Error deleting project",
+          details: err?.message || err,
+        },
+      });
   }
 }

@@ -13,14 +13,14 @@ router.get("/:id", developerController.getDeveloper);
 // Create (multipart if photo/profile needed)
 router.post(
   "/",
-  uploadMemory.fields([{ name: "photo", maxCount: 1 }]),
+  uploadMemory.fields([{ name: "logo", maxCount: 1 }]),
   developerController.createDeveloper
 );
 
 // Update (multipart)
 router.put(
   "/:id",
-  uploadMemory.fields([{ name: "photo", maxCount: 1 }]),
+  uploadMemory.fields([{ name: "logo", maxCount: 1 }]),
   developerController.updateDeveloper
 );
 
