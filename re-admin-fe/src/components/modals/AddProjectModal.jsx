@@ -5,7 +5,7 @@ import {
   uploadProjectImages,
   uploadProjectDocuments,
 } from "../../services/projectService";
-import { getAllCategories } from "../../services/projectCategoryService";
+// import { getAllCategories } from "../../services/projectCategoryService";
 import useEscClose from "../hooks/useEscClose";
 import SafeQuill from "../common/SafeQuill";
 
@@ -29,25 +29,25 @@ export default function AddProjectModal({ onClose, onSave }) {
   const [heroPreview, setHeroPreview] = useState("");
   const [imageFiles, setImageFiles] = useState([]);
   const [documentFiles, setDocumentFiles] = useState([]);
-  const [categories, setCategories] = useState([]);
+//   const [categories, setCategories] = useState([]);
   const [saving, setSaving] = useState(false);
 
   const quillRef = useRef(null);
 
   // Fetch categories
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const res = await getAllCategories();
-        if (!mounted) return;
-        setCategories(Array.isArray(res) ? res : []);
-      } catch (err) {
-        console.error("Failed to fetch categories:", err);
-      }
-    })();
-    return () => (mounted = false);
-  }, []);
+//   useEffect(() => {
+//     let mounted = true;
+//     (async () => {
+//       try {
+//         const res = await getAllCategories();
+//         if (!mounted) return;
+//         setCategories(Array.isArray(res) ? res : []);
+//       } catch (err) {
+//         console.error("Failed to fetch categories:", err);
+//       }
+//     })();
+//     return () => (mounted = false);
+//   }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -193,7 +193,7 @@ export default function AddProjectModal({ onClose, onSave }) {
           </div>
 
           <div>
-            <label className="block mb-1">Category</label>
+            {/* <label className="block mb-1">Category</label>
             <select
               name="category_id"
               value={form.category_id}
@@ -207,7 +207,7 @@ export default function AddProjectModal({ onClose, onSave }) {
                   {c.name}
                 </option>
               ))}
-            </select>
+            </select> */}
           </div>
 
           <div>

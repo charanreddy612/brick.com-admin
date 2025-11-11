@@ -6,7 +6,7 @@ import {
   uploadProjectImages,
   uploadProjectDocuments,
 } from "../../services/projectService";
-import { getAllCategories } from "../../services/projectCategoryService";
+// import { getAllCategories } from "../../services/projectCategoryService";
 import useEscClose from "../hooks/useEscClose";
 import SafeQuill from "../common/SafeQuill";
 
@@ -32,7 +32,7 @@ export default function EditProjectModal({ projectId, onClose, onSave }) {
   const [existingDocuments, setExistingDocuments] = useState([]);
   const [imageFiles, setImageFiles] = useState([]);
   const [documentFiles, setDocumentFiles] = useState([]);
-  const [categories, setCategories] = useState([]);
+//   const [categories, setCategories] = useState([]);
   const [saving, setSaving] = useState(false);
 
   const quillRef = useRef(null);
@@ -46,13 +46,13 @@ export default function EditProjectModal({ projectId, onClose, onSave }) {
     (async () => {
       try {
         const [catRes, projRes] = await Promise.all([
-          getAllCategories(),
+        //   getAllCategories(),
           getProject(projectId),
         ]);
 
         if (!mounted) return;
 
-        setCategories(Array.isArray(catRes) ? catRes : []);
+        // setCategories(Array.isArray(catRes) ? catRes : []);
 
         if (projRes) {
           setForm({
@@ -239,7 +239,7 @@ export default function EditProjectModal({ projectId, onClose, onSave }) {
           </div>
 
           <div>
-            <label className="block mb-1">Category</label>
+            {/* <label className="block mb-1">Category</label>
             <select
               name="category_id"
               value={form.category_id}
@@ -253,7 +253,7 @@ export default function EditProjectModal({ projectId, onClose, onSave }) {
                   {c.name}
                 </option>
               ))}
-            </select>
+            </select> */}
           </div>
 
           <div>
