@@ -5,7 +5,6 @@ export const getSidebarMenu = async (req, res) => {
     console.log("inside getSidebarMenu controller");
 
     const roleId = Number(req.user?.role_id); // ensure number
-    console.log("roleId from token:", roleId);
 
     if (!roleId) {
       console.warn("Missing role_id in token");
@@ -23,7 +22,6 @@ export const getSidebarMenu = async (req, res) => {
       throw roleMenuError;
     }
 
-    console.log("roleMenu fetched:", roleMenu);
 
     if (!roleMenu || roleMenu.length === 0) {
       console.warn("No menu assigned for this role");
@@ -31,7 +29,6 @@ export const getSidebarMenu = async (req, res) => {
     }
 
     const menuIds = roleMenu.map((rm) => Number(rm.menu_id));
-    console.log("menuIds:", menuIds);
 
     // 2️⃣ Fetch all sidebar items
     const { data: menus, error: menuError } = await supabase
@@ -45,8 +42,6 @@ export const getSidebarMenu = async (req, res) => {
       console.error("Error fetching sidebar_menu:", menuError);
       throw menuError;
     }
-
-    console.log("menus fetched:", menus);
 
     if (!menus || menus.length === 0) {
       console.warn("No active menus found for the role");
@@ -69,7 +64,6 @@ export const getSidebarMenu = async (req, res) => {
       }
     });
 
-    console.log("final menu tree:", rootMenus);
     res.json(rootMenus);
   } catch (err) {
     console.error("Sidebar fetch error:", err);
