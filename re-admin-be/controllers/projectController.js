@@ -64,9 +64,9 @@ export async function createProject(req, res) {
 
     // Optional hero image
     if (f) {
-      const { url, error } = await uploadImageBuffer(BUCKET, FOLDER, f.buffer, f.originalname, f.mimetype);
+      const { url, error } = await uploadImageBuffer(BUCKET, HERO_FOLDER, f.buffer, f.originalname, f.mimetype);
       if (error) return res.status(500).json({ data: null, error: { message: "Hero image upload failed", details: error } });
-      toInsert.hero_image_url = url;
+      toInsert.hero_image = url;
     }
 
     const created = await projectRepo.insert(toInsert);
@@ -99,9 +99,9 @@ export async function updateProject(req, res) {
 
     // Optional hero image replacement
     if (f) {
-      const { url, error } = await uploadImageBuffer(BUCKET, FOLDER, f.buffer, f.originalname, f.mimetype);
+      const { url, error } = await uploadImageBuffer(BUCKET, HERO_FOLDER, f.buffer, f.originalname, f.mimetype);
       if (error) return res.status(500).json({ data: null, error: { message: "Hero image upload failed", details: error } });
-      patch.hero_image_url = url;
+      patch.hero_image = url;
     }
 
     const updated = await projectRepo.update(id, patch);
@@ -133,12 +133,12 @@ export async function deleteProject(req, res) {
     if (!proj) return res.status(404).json({ data: null, error: { message: "Project not found" } });
 
     // Delete hero image if exists
-    if (proj.hero_image_url) await deleteFilesByUrls(BUCKET, [proj.hero_image_url]);
+    if (proj.hero_image) await deleteFilesByUrls(BUCKET, [proj.hero_image]);
 
     const ok = await projectRepo.remove(id);
     if (!ok) return res.status(500).json({ data: null, error: { message: "Failed to delete project" } });
 
-    return res.json({ data: { id, deleted_files: proj.hero_image_url ? 1 : 0 }, error: null });
+    return res.json({ data: { id, deleted_files: proj.hero_image ? 1 : 0 }, error: null });
   } catch (err) {
     return res.status(500).json({ data: null, error: { message: "Error deleting project", details: err.message } });
   }

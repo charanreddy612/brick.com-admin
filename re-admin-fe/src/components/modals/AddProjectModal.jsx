@@ -29,25 +29,25 @@ export default function AddProjectModal({ onClose, onSave }) {
   const [heroPreview, setHeroPreview] = useState("");
   const [imageFiles, setImageFiles] = useState([]);
   const [documentFiles, setDocumentFiles] = useState([]);
-//   const [categories, setCategories] = useState([]);
+  //   const [categories, setCategories] = useState([]);
   const [saving, setSaving] = useState(false);
 
   const quillRef = useRef(null);
 
   // Fetch categories
-//   useEffect(() => {
-//     let mounted = true;
-//     (async () => {
-//       try {
-//         const res = await getAllCategories();
-//         if (!mounted) return;
-//         setCategories(Array.isArray(res) ? res : []);
-//       } catch (err) {
-//         console.error("Failed to fetch categories:", err);
-//       }
-//     })();
-//     return () => (mounted = false);
-//   }, []);
+  //   useEffect(() => {
+  //     let mounted = true;
+  //     (async () => {
+  //       try {
+  //         const res = await getAllCategories();
+  //         if (!mounted) return;
+  //         setCategories(Array.isArray(res) ? res : []);
+  //       } catch (err) {
+  //         console.error("Failed to fetch categories:", err);
+  //       }
+  //     })();
+  //     return () => (mounted = false);
+  //   }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -112,10 +112,10 @@ export default function AddProjectModal({ onClose, onSave }) {
 
     // Upload additional images
     const imagesUrls = [];
-    for (const file of imageFiles) {
+    if (imageFiles.length > 0) {
       try {
-        const url = await uploadProjectImages(file);
-        if (url) imagesUrls.push(url);
+        const urls = await uploadProjectImages(imageFiles);
+        imagesUrls.push(...urls);
       } catch (err) {
         console.error("Image upload failed:", err);
       }
@@ -124,10 +124,10 @@ export default function AddProjectModal({ onClose, onSave }) {
 
     // Upload documents
     const documentsUrls = [];
-    for (const file of documentFiles) {
+    if (documentFiles.length > 0) {
       try {
-        const url = await uploadProjectDocuments(file);
-        if (url) documentsUrls.push(url);
+        const urls = await uploadProjectDocuments(documentFiles);
+        documentsUrls.push(...urls);
       } catch (err) {
         console.error("Document upload failed:", err);
       }

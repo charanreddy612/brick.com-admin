@@ -147,12 +147,36 @@ export async function getById(id) {
 
 // Insert
 export async function insert(payload) {
+  const slug = await ensureUniqueSlug(payload.name);
+  const base = {
+    name: payload.name,
+    slug,
+    email: payload.email || null,
+    phone: payload.phone || null,
+    website: payload.website || null,
+    logo_url: payload.logo_url || null,
+    about: payload.about || null,
+    active: payload.active ?? true,
+  };
   const { data, error } = await supabase
     .from("developers")
-    .insert(payload)
+    .insert(base)
     .select()
     .single();
   if (error) throw error;
+
+  // insert city relations
+  if (payload.cities?.length) {
+    const cityRows = payload.cities.map((c) => ({
+      developer_id: data.id,
+      city: c,
+    }));
+    const { error: cityErr } = await supabase
+      .from("developer_cities")
+      .insert(cityRows);
+    if (cityErr) console.error("City insert failed:", cityErr);
+  }
+
   return data;
 }
 
@@ -205,4 +229,11 @@ export async function count() {
     .select("*", { count: "exact", head: true });
   if (error) throw error;
   return count ?? 0;
+}
+
+export async function linkCities(developer_id, cities = []) {
+  if (!cities.length) return;
+  const rows = cities.map((city) => ({ developer_id, city }));
+  const { error } = await supabase.from("developer_cities").insert(rows);
+  if (error) throw error;
 }

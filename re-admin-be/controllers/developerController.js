@@ -70,13 +70,16 @@ export async function createDeveloper(req, res) {
   try {
     const b = req.body || {};
     const f = req.files || {};
-
+    console.log(req.files);
     const toInsert = {
       name: b.name,
       email: b.email || "",
       phone: b.phone || "",
-      cities: parseJSON(b.cities, []),
+      website: b.website || "",
+      about: b.about || "",
+      country: b.country || "India",
       active: toBool(b.active),
+      slug: await developerRepo.ensureUniqueSlug(b.name),
     };
 
     // Optional photo
@@ -98,6 +101,13 @@ export async function createDeveloper(req, res) {
     }
 
     const created = await developerRepo.insert(toInsert);
+
+    if (b.cities) {
+      const cities = parseJSON(b.cities, []);
+      if (cities.length) {
+        await developerRepo.linkCities(created.id, cities);
+      }
+    }
     return res.status(201).json({ data: created, error: null });
   } catch (err) {
     return res.status(500).json({
