@@ -1,14 +1,12 @@
-// src/components/developers/AddDeveloperModal.jsx
-import React, { useState, useRef } from "react";
-import {
-  addDeveloper,
-  // uploadDeveloperImage,
-} from "../../services/developerService";
+import React, { useState } from "react";
+import { addDeveloper } from "../../services/developerService";
 import useEscClose from "../hooks/useEscClose";
 
 export default function AddDeveloperModal({ onClose, onSave }) {
   const [form, setForm] = useState({
     name: "",
+    email: "",
+    phone: "",
     country: "India",
     cities: [],
     about: "",
@@ -46,6 +44,8 @@ export default function AddDeveloperModal({ onClose, onSave }) {
   const resetAll = () => {
     setForm({
       name: "",
+      email: "",
+      phone: "",
       country: "India",
       cities: [],
       about: "",
@@ -63,10 +63,11 @@ export default function AddDeveloperModal({ onClose, onSave }) {
     setSaving(true);
     const fd = new FormData();
     fd.append("name", form.name);
+    fd.append("email", form.email || "");
+    fd.append("phone", form.phone || "");
     fd.append("country", form.country);
     fd.append("about", form.about || "");
     fd.append("active", String(!!form.active));
-
     if (logo) fd.append("logo", logo);
     fd.append("cities", JSON.stringify(form.cities));
 
@@ -83,7 +84,6 @@ export default function AddDeveloperModal({ onClose, onSave }) {
     }
   };
 
-  // close on ESC
   useEscClose(onClose);
 
   return (
@@ -106,6 +106,32 @@ export default function AddDeveloperModal({ onClose, onSave }) {
               onChange={handleChange}
               className="w-full border px-3 py-2 rounded"
               required
+            />
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block mb-1">Email</label>
+            <input
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              className="w-full border px-3 py-2 rounded"
+              placeholder="developer@example.com"
+            />
+          </div>
+
+          {/* Phone */}
+          <div>
+            <label className="block mb-1">Phone</label>
+            <input
+              type="tel"
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
+              className="w-full border px-3 py-2 rounded"
+              placeholder="+91 98765 43210"
             />
           </div>
 
