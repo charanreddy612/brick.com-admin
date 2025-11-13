@@ -70,7 +70,11 @@ export async function createDeveloper(req, res) {
   try {
     const b = req.body || {};
     const f = req.files || {};
-    console.log(req.files);
+    console.log("Incoming developer:", b.name, "Files:", Object.keys(f));
+
+    // Step 1
+    const slug = await developerRepo.ensureUniqueSlug(b.name);
+    console.log("Slug OK:", slug);
     const toInsert = {
       name: b.name,
       email: b.email || "",
@@ -79,7 +83,7 @@ export async function createDeveloper(req, res) {
       about: b.about || "",
       country: b.country || "India",
       active: toBool(b.active),
-      slug: await developerRepo.ensureUniqueSlug(b.name),
+      slug,
     };
 
     // Optional photo
@@ -92,6 +96,7 @@ export async function createDeveloper(req, res) {
         file.originalname,
         file.mimetype
       );
+      console.log("Upload result:", { url, error });
       if (error)
         return res.status(500).json({
           data: null,
@@ -100,7 +105,10 @@ export async function createDeveloper(req, res) {
       toInsert.logo_url = url;
     }
 
+    // Step 3
+    console.log("Inserting developer:", toInsert);
     const created = await developerRepo.insert(toInsert);
+    console.log("Created developer:", created);
 
     if (b.cities) {
       const cities = parseJSON(b.cities, []);
@@ -110,6 +118,7 @@ export async function createDeveloper(req, res) {
     }
     return res.status(201).json({ data: created, error: null });
   } catch (err) {
+    console.error("❌ CREATE DEVELOPER ERROR:", err);
     return res.status(500).json({
       data: null,
       error: {
