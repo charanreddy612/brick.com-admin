@@ -135,6 +135,19 @@ export default function AddDeveloperModal({ onClose, onSave }) {
             />
           </div>
 
+          {/* Website */}
+          <div>
+            <label className="block mb-1">Website</label>
+            <input
+              type="url"
+              name="website"
+              value={form.website}
+              onChange={handleChange}
+              className="w-full border px-3 py-2 rounded"
+              placeholder="https://www.developer.com"
+            />
+          </div>
+
           {/* Country */}
           <div>
             <label className="block mb-1">Country</label>
