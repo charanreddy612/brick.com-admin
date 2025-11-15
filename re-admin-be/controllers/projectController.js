@@ -117,30 +117,50 @@ export async function createProject(req, res) {
   }
 }
 
-// Update project
+// ---------------- UPDATE PROJECT (FULL SYNC WITH CREATE) ----------------
 export async function updateProject(req, res) {
   try {
     const { id } = req.params;
     const b = req.body || {};
     const f = req.file; // multer.single("hero_image")
 
+    // Fetch current project so we can preserve/cleanup
+    const existing = await projectRepo.getById(id);
+    if (!existing) {
+      return res
+        .status(404)
+        .json({ data: null, error: { message: "Project not found" } });
+    }
+
+    // Parse arrays & objects
+    const newImages =
+      b.images !== undefined ? parseJSON(b.images, []) : existing.images;
+    const newDocuments =
+      b.documents !== undefined
+        ? parseJSON(b.documents, [])
+        : existing.documents;
+
     const patch = {
-      title: b.title ?? undefined,
-      slug: b.slug ?? undefined,
-      description: b.description ?? undefined,
-      location: b.location ?? undefined,
-      start_date: b.start_date ?? undefined,
-      end_date: b.end_date ?? undefined,
-      status: b.status !== undefined ? toBool(b.status) : undefined,
+      title: b.title ?? existing.title,
+      slug: b.slug ?? existing.slug,
+      description: b.description ?? existing.description,
+      location: b.location ?? existing.location,
+      start_date: b.start_date ?? existing.start_date,
+      end_date: b.end_date ?? existing.end_date,
+      status: b.status !== undefined ? toBool(b.status) : existing.status,
+
       amenities:
-        b.amenities !== undefined ? parseJSON(b.amenities, []) : undefined,
-      meta: b.meta !== undefined ? parseJSON(b.meta, {}) : undefined,
-      images: b.images !== undefined ? parseJSON(b.images, []) : undefined,
-      documents:
-        b.documents !== undefined ? parseJSON(b.documents, []) : undefined,
+        b.amenities !== undefined
+          ? parseJSON(b.amenities, [])
+          : existing.amenities,
+
+      meta: b.meta !== undefined ? parseJSON(b.meta, {}) : existing.meta,
+
+      images: newImages,
+      documents: newDocuments,
     };
 
-    // Optional hero image replacement
+    // ---------------------- HERO IMAGE REPLACEMENT ----------------------
     if (f) {
       const { url, error } = await uploadImageBuffer(
         BUCKET,
@@ -149,19 +169,40 @@ export async function updateProject(req, res) {
         f.originalname,
         f.mimetype
       );
-      if (error)
+
+      if (error) {
         return res.status(500).json({
           data: null,
           error: { message: "Hero image upload failed", details: error },
         });
+      }
+
+      // delete old hero image
+      if (existing.hero_image) {
+        await deleteFilesByUrls(BUCKET, [existing.hero_image]);
+      }
+
       patch.hero_image = url;
     }
 
+    // ---------------------- DELETE REMOVED IMAGES ----------------------
+    const removedImages = existing.images.filter(
+      (oldUrl) => !newImages.includes(oldUrl)
+    );
+    if (removedImages.length > 0) {
+      await deleteFilesByUrls(BUCKET, removedImages);
+    }
+
+    // ---------------------- DELETE REMOVED DOCUMENTS ----------------------
+    const removedDocs = existing.documents.filter(
+      (oldUrl) => !newDocuments.includes(oldUrl)
+    );
+    if (removedDocs.length > 0) {
+      await deleteFilesByUrls(BUCKET, removedDocs);
+    }
+
+    // ---------------------- UPDATE ----------------------
     const updated = await projectRepo.update(id, patch);
-    if (!updated)
-      return res
-        .status(404)
-        .json({ data: null, error: { message: "Project not found" } });
 
     return res.json({ data: updated, error: null });
   } catch (err) {
