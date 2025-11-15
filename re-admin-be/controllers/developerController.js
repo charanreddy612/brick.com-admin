@@ -135,18 +135,23 @@ export async function updateDeveloper(req, res) {
     const b = req.body || {};
     const f = req.files || {};
 
+    // Parse cities array
+    const cities = b.cities ? parseJSON(b.cities, []) : [];
+
     const patch = {
       name: b.name ?? undefined,
       email: b.email ?? undefined,
       phone: b.phone ?? undefined,
-      cities: b.cities !== undefined ? parseJSON(b.cities, []) : undefined,
+      website: b.website ?? undefined,
+      about: b.about ?? undefined,
+      country: b.country ?? undefined,
       active: b.active !== undefined ? toBool(b.active) : undefined,
     };
 
-    // Photo removal
+    // Remove logo
     if (toBool(b.remove_photo)) patch.logo_url = null;
 
-    // New photo upload
+    // Upload new logo
     if (f.logo?.[0]) {
       const file = f.logo[0];
       const { url, error } = await uploadImageBuffer(
@@ -161,16 +166,31 @@ export async function updateDeveloper(req, res) {
           data: null,
           error: { message: "Photo upload failed", details: error },
         });
+
       patch.logo_url = url;
     }
 
+    // Update developer main row
     const updated = await developerRepo.update(id, patch);
     if (!updated)
-      return res
-        .status(404)
-        .json({ data: null, error: { message: "Developer not found" } });
+      return res.status(404).json({
+        data: null,
+        error: { message: "Developer not found" },
+      });
 
-    return res.json({ data: updated, error: null });
+    // ---- UPDATE CITIES (developer_cities TABLE) ----
+    // 1. Delete old cities
+    await developerRepo.deleteCities(id);
+
+    // 2. Insert new cities
+    if (cities.length > 0) {
+      await developerRepo.linkCities(id, cities);
+    }
+
+    // Return updated developer + cities
+    const final = await developerRepo.getById(id);
+
+    return res.json({ data: final, error: null });
   } catch (err) {
     return res.status(500).json({
       data: null,

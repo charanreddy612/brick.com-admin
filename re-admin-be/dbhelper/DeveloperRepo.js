@@ -122,27 +122,42 @@ export async function list({
   }
 }
 
-// Get by ID
+// Get by ID (with cities from developer_cities)
 export async function getById(id) {
-  const selectCols = `
-    id,
-    name,
-    slug,
-    email,
-    phone,
-    cities,
-    active,
-    logo_url,
-    created_at,
-    updated_at
-  `;
-  const { data, error } = await supabase
+  // fetch developer
+  const { data: dev, error } = await supabase
     .from("developers")
-    .select(selectCols)
+    .select(
+      `
+      id,
+      name,
+      slug,
+      email,
+      phone,
+      website,
+      about,
+      country,
+      active,
+      logo_url,
+      created_at,
+      updated_at
+    `
+    )
     .eq("id", id)
     .single();
+
   if (error) throw error;
-  return data;
+  if (!dev) return null;
+
+  // fetch linked cities
+  const { data: cities } = await supabase
+    .from("developer_cities")
+    .select(`city_id , name: c.cities?.name || ""`)
+    .eq("developer_id", id);
+
+  dev.cities = cities?.map((c) => c.city_id) ?? [];
+
+  return dev;
 }
 
 // Insert
@@ -236,4 +251,8 @@ export async function linkCities(developer_id, cities = []) {
   const rows = cities.map((city) => ({ developer_id, city }));
   const { error } = await supabase.from("developer_cities").insert(rows);
   if (error) throw error;
+}
+
+async function deleteCities(devId) {
+  return db("developer_cities").where({ developer_id: devId }).del();
 }

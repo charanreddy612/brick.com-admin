@@ -9,6 +9,10 @@ import useEscClose from "../hooks/useEscClose";
 export default function EditDeveloperModal({ developer, onClose, onSave }) {
   const [form, setForm] = useState({
     name: "",
+    email: "",
+    phone: "",
+    website: "",
+    slug: "",
     country: "India",
     cities: [],
     about: "",
@@ -28,6 +32,10 @@ export default function EditDeveloperModal({ developer, onClose, onSave }) {
       cities: Array.isArray(developer.cities) ? developer.cities : [],
       about: developer.about || "",
       active: !!developer.active,
+      email: developer.email || "",
+      phone: developer.phone || "",
+      website: developer.website || "",
+      slug: developer.slug || "",
     });
     setLogoPreview(developer.logo_url || "");
   }, [developer]);
@@ -77,10 +85,15 @@ export default function EditDeveloperModal({ developer, onClose, onSave }) {
     setSaving(true);
     const fd = new FormData();
     fd.append("name", form.name);
+    fd.append("email", form.email || "");
+    fd.append("phone", form.phone || "");
+    fd.append("website", form.website || "");
+    fd.append("slug", form.slug || "");
     fd.append("country", form.country);
     fd.append("about", form.about || "");
     fd.append("active", String(!!form.active));
     fd.append("cities", JSON.stringify(form.cities));
+    fd.append("existing_logo_url", developer.logo_url || "");
     if (logo) fd.append("logo", logo);
 
     try {
@@ -119,6 +132,40 @@ export default function EditDeveloperModal({ developer, onClose, onSave }) {
               onChange={handleChange}
               className="w-full border px-3 py-2 rounded"
               required
+            />
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block mb-1">Email</label>
+            <input
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              className="w-full border px-3 py-2 rounded"
+            />
+          </div>
+
+          {/* Phone */}
+          <div>
+            <label className="block mb-1">Phone</label>
+            <input
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
+              className="w-full border px-3 py-2 rounded"
+            />
+          </div>
+
+          {/* Website */}
+          <div>
+            <label className="block mb-1">Website</label>
+            <input
+              name="website"
+              value={form.website}
+              onChange={handleChange}
+              className="w-full border px-3 py-2 rounded"
+              placeholder="www.example.com"
             />
           </div>
 
