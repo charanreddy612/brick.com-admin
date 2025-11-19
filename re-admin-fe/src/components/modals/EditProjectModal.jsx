@@ -136,26 +136,6 @@ export default function EditProjectModal({ projectId, onClose, onSave }) {
 
     setSaving(true);
 
-    let finalImages = [...form.images];
-    if (newImages.length > 0) {
-      try {
-        const uploaded = await uploadProjectImages(newImages);
-        finalImages.push(...uploaded);
-      } catch (err) {
-        console.error("Images upload failed:", err);
-      }
-    }
-
-    let finalDocs = [...form.documents];
-    if (newDocuments.length > 0) {
-      try {
-        const uploaded = await uploadProjectDocuments(newDocuments);
-        finalDocs.push(...uploaded);
-      } catch (err) {
-        console.error("Documents upload failed:", err);
-      }
-    }
-
     // Upload amenity images and get URLs
     const amenitiesWithUrls = [];
     for (const amenity of form.amenities) {
@@ -191,8 +171,6 @@ export default function EditProjectModal({ projectId, onClose, onSave }) {
     if (newHeroFile) {
       fd.append("hero_image", newHeroFile);
     }
-    fd.append("images", JSON.stringify(finalImages));
-    fd.append("documents", JSON.stringify(finalDocs));
 
     try {
       const { error } = await updateProject(projectId, fd);
