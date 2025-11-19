@@ -1,4 +1,3 @@
-// src/dbhelper/ProjectRepo.js
 import { supabase } from "../dbhelper/dbclient.js";
 
 // Normalize slug
@@ -44,6 +43,9 @@ export async function ensureUniqueSlugOnUpdate(id, proposed) {
   }
   return `${seed}-${Date.now()}`;
 }
+
+// Utility: Deduplicate array
+const dedupe = (arr = []) => [...new Set(arr)];
 
 // List with filters + pagination
 export async function list({ title = "", page = 1, limit = 20 } = {}) {
@@ -93,31 +95,57 @@ export async function getById(id) {
   return data;
 }
 
-// Insert
+// Insert -- amenities must be array of objects
 export async function insert(payload) {
+  const out = { ...payload };
+  out.images = dedupe(Array.isArray(out.images) ? out.images : []);
+  out.documents = dedupe(Array.isArray(out.documents) ? out.documents : []);
+  out.amenities = Array.isArray(out.amenities)
+    ? out.amenities.map((a) => ({
+        title: (a?.title ?? "").toString(),
+        description: (a?.description ?? "").toString(),
+        imageUrl: (a?.imageUrl ?? "").toString(),
+      }))
+    : [];
   const { data, error } = await supabase
     .from("projects")
-    .insert(payload)
+    .insert(out)
     .select()
     .single();
   if (error) throw error;
   return data;
 }
 
-// Update (append images/docs if provided)
+// Update -- amenities as array of objects, always dedupe arrays
 export async function update(id, patch, appendImages = [], appendDocs = []) {
   const clean = Object.fromEntries(
     Object.entries(patch).filter(([, v]) => v !== undefined)
   );
-
-  // Fetch current project to append images/docs
   const current = await getById(id);
   if (!current) return null;
 
-  if (appendImages.length)
-    clean.images = [...(current.images || []), ...appendImages];
-  if (appendDocs.length)
-    clean.documents = [...(current.documents || []), ...appendDocs];
+  // Handle append/replace arrays
+  clean.images = dedupe([
+    ...(current.images || []),
+    ...(Array.isArray(clean.images) ? clean.images : []),
+    ...appendImages,
+  ]);
+  clean.documents = dedupe([
+    ...(current.documents || []),
+    ...(Array.isArray(clean.documents) ? clean.documents : []),
+    ...appendDocs,
+  ]);
+
+  // Amenities must be structured objects
+  if (clean.amenities) {
+    clean.amenities = Array.isArray(clean.amenities)
+      ? clean.amenities.map((a) => ({
+          title: (a?.title ?? "").toString(),
+          description: (a?.description ?? "").toString(),
+          imageUrl: (a?.imageUrl ?? "").toString(),
+        }))
+      : [];
+  }
 
   if (Object.keys(clean).length === 0) return current;
 
@@ -131,18 +159,11 @@ export async function update(id, patch, appendImages = [], appendDocs = []) {
   return data;
 }
 
-// Toggle status
-export async function toggleStatus(id) {
-  const { data: cur, error: ge } = await supabase
-    .from("projects")
-    .select("status")
-    .eq("id", id)
-    .single();
-  if (ge) throw ge;
-  const next = !cur?.status;
+// Idempotent status set
+export async function setStatus(id, active) {
   const { data, error } = await supabase
     .from("projects")
-    .update({ status: next })
+    .update({ status: !!active })
     .eq("id", id)
     .select()
     .single();

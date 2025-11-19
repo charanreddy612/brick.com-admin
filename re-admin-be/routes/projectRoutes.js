@@ -1,4 +1,3 @@
-// src/routes/projectRoutes.js
 import express from "express";
 import { uploadMemory } from "../middleware/uploadMemory.js";
 import * as projectController from "../controllers/projectController.js";
@@ -14,22 +13,18 @@ router.get("/:id", projectController.getProject);
 // Create project (multipart for files)
 router.post(
   "/",
-  uploadMemory.fields([
-    { name: "hero_image", maxCount: 1 },
-  ]),
+  uploadMemory.single("hero_image"), // switched to .single
   projectController.createProject
 );
 
 // Update project (multipart for files)
 router.put(
   "/:id",
-  uploadMemory.fields([
-    { name: "hero_image", maxCount: 1 },
-  ]),
+  uploadMemory.single("hero_image"), // switched to .single
   projectController.updateProject
 );
 
-// Toggle project status (active/inactive)
+// Toggle project status (active/inactive, now idempotent)
 router.patch("/:id/status", projectController.updateProjectStatus);
 
 // Delete project
@@ -53,4 +48,5 @@ router.post(
   uploadMemory.array("documents", 20),
   projectController.uploadProjectDocuments
 );
+
 export default router;

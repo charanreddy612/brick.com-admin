@@ -1,11 +1,9 @@
-// src/components/projects/EditProjectModal.jsx
 import React, { useEffect, useState, useRef } from "react";
 import {
   getProject,
   updateProject,
   uploadProjectImages,
   uploadProjectDocuments,
-  uploadHeroImage,
 } from "../../services/projectService";
 import SafeQuill from "../common/SafeQuill";
 import useEscClose from "../hooks/useEscClose";
@@ -13,21 +11,18 @@ import useEscClose from "../hooks/useEscClose";
 export default function EditProjectModal({ id, onClose, onSave }) {
   const [form, setForm] = useState(null);
   const [saving, setSaving] = useState(false);
-
   const [heroPreview, setHeroPreview] = useState("");
   const [newHeroFile, setNewHeroFile] = useState(null);
   const [newImages, setNewImages] = useState([]);
   const [newDocuments, setNewDocuments] = useState([]);
-
   const quillRef = useRef(null);
 
-  // ------------------- LOAD PROJECT -------------------
+  // Load project data
   useEffect(() => {
     let mounted = true;
     (async () => {
       const { data, error } = await getProject(id);
       if (error || !data) return;
-
       if (!mounted) return;
 
       setForm({
@@ -49,13 +44,20 @@ export default function EditProjectModal({ id, onClose, onSave }) {
 
       setHeroPreview(data.hero_image || "");
     })();
-
     return () => (mounted = false);
   }, [id]);
 
   if (!form) return null;
 
-  // ------------------- HANDLERS -------------------
+  const slugify = (text) =>
+    text
+      .trim()
+      .toLowerCase()
+      .replace(/['"]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+  // Handlers
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm((f) => ({ ...f, [name]: type === "checkbox" ? checked : value }));
@@ -63,13 +65,7 @@ export default function EditProjectModal({ id, onClose, onSave }) {
 
   const handleSlugAuto = () => {
     if (!form.slug && form.title) {
-      const slug = form.title
-        .trim()
-        .toLowerCase()
-        .replace(/['"]/g, "")
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "");
-      setForm((f) => ({ ...f, slug }));
+      setForm((f) => ({ ...f, slug: slugify(f.title) }));
     }
   };
 
@@ -88,13 +84,31 @@ export default function EditProjectModal({ id, onClose, onSave }) {
     setHeroPreview(file ? URL.createObjectURL(file) : form.hero_image);
   };
 
+  // Amenities handlers: add, update, remove
+  const updateAmenity = (index, field, value) => {
+    const newAmenities = [...form.amenities];
+    newAmenities[index] = { ...newAmenities[index], [field]: value };
+    setForm((f) => ({ ...f, amenities: newAmenities }));
+  };
+  const addAmenity = () => {
+    setForm((f) => ({
+      ...f,
+      amenities: [...f.amenities, { title: "", description: "", imageUrl: "" }],
+    }));
+  };
+  const removeAmenity = (index) => {
+    const newAmenities = form.amenities.filter((_, i) => i !== index);
+    setForm((f) => ({ ...f, amenities: newAmenities }));
+  };
+
+  // Validate required fields
+  const isValid = form.title.trim() !== "" && form.slug.trim() !== "";
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (saving) return;
-
+    if (saving || !isValid) return;
     setSaving(true);
 
-    // ------------------- IMAGES UPLOAD -------------------
     let finalImages = [...form.images];
     if (newImages.length > 0) {
       try {
@@ -105,7 +119,6 @@ export default function EditProjectModal({ id, onClose, onSave }) {
       }
     }
 
-    // ------------------- DOCUMENT UPLOAD -------------------
     let finalDocs = [...form.documents];
     if (newDocuments.length > 0) {
       try {
@@ -116,7 +129,6 @@ export default function EditProjectModal({ id, onClose, onSave }) {
       }
     }
 
-    // ------------------- FORM DATA -------------------
     const fd = new FormData();
     fd.append("title", form.title);
     fd.append("slug", form.slug);
@@ -128,19 +140,15 @@ export default function EditProjectModal({ id, onClose, onSave }) {
     fd.append("status", String(!!form.status));
     fd.append("amenities", JSON.stringify(form.amenities));
     fd.append("meta", JSON.stringify(form.meta));
-
-    // FIXED: formData → fd
     if (newHeroFile) {
       fd.append("hero_image", newHeroFile);
     }
-
     fd.append("images", JSON.stringify(finalImages));
     fd.append("documents", JSON.stringify(finalDocs));
 
     try {
       const { error } = await updateProject(id, fd);
       if (error) throw new Error(error.message || "Update failed");
-
       onSave?.();
       onClose?.();
     } catch (err) {
@@ -153,7 +161,6 @@ export default function EditProjectModal({ id, onClose, onSave }) {
 
   useEscClose(onClose);
 
-  // ------------------- UI -------------------
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white w-full max-w-4xl rounded shadow-lg p-6 max-h-[95vh] overflow-y-auto">
@@ -163,9 +170,7 @@ export default function EditProjectModal({ id, onClose, onSave }) {
             Back
           </button>
         </div>
-
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* SAME FIELDS AS ADD */}
           <div>
             <label className="block mb-1">Title</label>
             <input
@@ -176,7 +181,6 @@ export default function EditProjectModal({ id, onClose, onSave }) {
               className="w-full border px-3 py-2 rounded"
             />
           </div>
-
           <div>
             <label className="block mb-1">Slug</label>
             <input
@@ -186,7 +190,6 @@ export default function EditProjectModal({ id, onClose, onSave }) {
               className="w-full border px-3 py-2 rounded"
             />
           </div>
-
           <div>
             <label className="block mb-1">Location</label>
             <input
@@ -196,7 +199,6 @@ export default function EditProjectModal({ id, onClose, onSave }) {
               className="w-full border px-3 py-2 rounded"
             />
           </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block mb-1">Start Date</label>
@@ -219,7 +221,6 @@ export default function EditProjectModal({ id, onClose, onSave }) {
               />
             </div>
           </div>
-
           <div>
             <label className="block mb-1">Description</label>
             <SafeQuill
@@ -231,19 +232,57 @@ export default function EditProjectModal({ id, onClose, onSave }) {
             />
           </div>
 
+          {/* Amenities repeatable group */}
           <div>
-            <label className="block mb-1">Amenities (comma separated)</label>
-            <input
-              name="amenities"
-              value={form.amenities.join(", ")}
-              onChange={(e) =>
-                setForm((f) => ({
-                  ...f,
-                  amenities: e.target.value.split(",").map((x) => x.trim()),
-                }))
-              }
-              className="w-full border px-3 py-2 rounded"
-            />
+            <label className="block mb-1 font-bold mb-2">Amenities</label>
+            {form.amenities.map((amenity, idx) => (
+              <div
+                key={idx}
+                className="border p-3 mb-2 rounded flex gap-3 items-center"
+              >
+                <input
+                  type="text"
+                  placeholder="Title"
+                  value={amenity.title}
+                  onChange={(e) => updateAmenity(idx, "title", e.target.value)}
+                  className="flex-grow border px-2 py-1 rounded"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Description"
+                  value={amenity.description}
+                  onChange={(e) =>
+                    updateAmenity(idx, "description", e.target.value)
+                  }
+                  className="flex-grow border px-2 py-1 rounded"
+                />
+                <input
+                  type="text"
+                  placeholder="Image URL"
+                  value={amenity.imageUrl}
+                  onChange={(e) =>
+                    updateAmenity(idx, "imageUrl", e.target.value)
+                  }
+                  className="flex-grow border px-2 py-1 rounded"
+                />
+                <button
+                  type="button"
+                  className="bg-red-600 text-white p-1 rounded"
+                  onClick={() => removeAmenity(idx)}
+                  title="Remove amenity"
+                >
+                  &times;
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="bg-green-600 text-white px-3 py-1 rounded"
+              onClick={addAmenity}
+            >
+              + Add Amenity
+            </button>
           </div>
 
           <div>
@@ -257,6 +296,7 @@ export default function EditProjectModal({ id, onClose, onSave }) {
               <img
                 src={heroPreview}
                 className="mt-2 w-48 h-32 object-cover rounded"
+                alt="hero"
               />
             )}
           </div>
@@ -310,7 +350,7 @@ export default function EditProjectModal({ id, onClose, onSave }) {
             </button>
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || !isValid}
               className="bg-blue-600 text-white px-4 py-2 rounded disabled:bg-gray-400"
             >
               {saving ? "Updating..." : "Update Project"}

@@ -1,11 +1,9 @@
-// src/components/projects/AddProjectModal.jsx
-import React, { useEffect, useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import {
   addProject,
   uploadProjectImages,
   uploadProjectDocuments,
 } from "../../services/projectService";
-// import { getAllCategories } from "../../services/projectCategoryService";
 import useEscClose from "../hooks/useEscClose";
 import SafeQuill from "../common/SafeQuill";
 
@@ -15,7 +13,7 @@ export default function AddProjectModal({ onClose, onSave }) {
     slug: "",
     description: "",
     hero_image: null,
-    amenities: [],
+    amenities: [], // Array of { title, description, imageUrl }
     category_id: "",
     location: "",
     start_date: "",
@@ -29,25 +27,17 @@ export default function AddProjectModal({ onClose, onSave }) {
   const [heroPreview, setHeroPreview] = useState("");
   const [imageFiles, setImageFiles] = useState([]);
   const [documentFiles, setDocumentFiles] = useState([]);
-  //   const [categories, setCategories] = useState([]);
   const [saving, setSaving] = useState(false);
-
   const quillRef = useRef(null);
 
-  // Fetch categories
-  //   useEffect(() => {
-  //     let mounted = true;
-  //     (async () => {
-  //       try {
-  //         const res = await getAllCategories();
-  //         if (!mounted) return;
-  //         setCategories(Array.isArray(res) ? res : []);
-  //       } catch (err) {
-  //         console.error("Failed to fetch categories:", err);
-  //       }
-  //     })();
-  //     return () => (mounted = false);
-  //   }, []);
+  // Slugify utility
+  const slugify = (text) =>
+    text
+      .trim()
+      .toLowerCase()
+      .replace(/['"]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -56,13 +46,7 @@ export default function AddProjectModal({ onClose, onSave }) {
 
   const handleSlugAuto = () => {
     if (!form.slug && form.title) {
-      const slug = String(form.title)
-        .trim()
-        .toLowerCase()
-        .replace(/['"]/g, "")
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "");
-      setForm((f) => ({ ...f, slug }));
+      setForm((f) => ({ ...f, slug: slugify(f.title) }));
     }
   };
 
@@ -72,28 +56,41 @@ export default function AddProjectModal({ onClose, onSave }) {
     setHeroPreview(file ? URL.createObjectURL(file) : "");
   };
 
-  const handleImages = (files) => {
-    setImageFiles(Array.from(files));
-  };
-
-  const handleDocuments = (files) => {
-    setDocumentFiles(Array.from(files));
-  };
+  const handleImages = (files) => setImageFiles(Array.from(files));
+  const handleDocuments = (files) => setDocumentFiles(Array.from(files));
 
   const handleMetaChange = (e) => {
     try {
-      const val = JSON.parse(e.target.value);
-      setForm((f) => ({ ...f, meta: val }));
+      const parsed = JSON.parse(e.target.value);
+      setForm((f) => ({ ...f, meta: parsed }));
     } catch {
-      // ignore parse errors for live typing
       setForm((f) => ({ ...f, meta: {} }));
     }
   };
 
+  // Amenities handlers: add, update, remove
+  const updateAmenity = (index, field, value) => {
+    const newAmenities = [...form.amenities];
+    newAmenities[index] = { ...newAmenities[index], [field]: value };
+    setForm((f) => ({ ...f, amenities: newAmenities }));
+  };
+  const addAmenity = () => {
+    setForm((f) => ({
+      ...f,
+      amenities: [...f.amenities, { title: "", description: "", imageUrl: "" }],
+    }));
+  };
+  const removeAmenity = (index) => {
+    const newAmenities = form.amenities.filter((_, i) => i !== index);
+    setForm((f) => ({ ...f, amenities: newAmenities }));
+  };
+
+  // Validate required fields (simple example)
+  const isValid = form.title.trim() !== "" && form.slug.trim() !== "";
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (saving) return;
-    if (!form.title || !form.slug) return;
+    if (saving || !isValid) return;
 
     setSaving(true);
     const fd = new FormData();
@@ -111,11 +108,10 @@ export default function AddProjectModal({ onClose, onSave }) {
     if (form.hero_image) fd.append("hero_image", form.hero_image);
 
     // Upload additional images
-    const imagesUrls = [];
+    let imagesUrls = [];
     if (imageFiles.length > 0) {
       try {
-        const urls = await uploadProjectImages(imageFiles);
-        imagesUrls.push(...urls);
+        imagesUrls = await uploadProjectImages(imageFiles);
       } catch (err) {
         console.error("Image upload failed:", err);
       }
@@ -123,11 +119,10 @@ export default function AddProjectModal({ onClose, onSave }) {
     fd.append("images", JSON.stringify(imagesUrls));
 
     // Upload documents
-    const documentsUrls = [];
+    let documentsUrls = [];
     if (documentFiles.length > 0) {
       try {
-        const urls = await uploadProjectDocuments(documentFiles);
-        documentsUrls.push(...urls);
+        documentsUrls = await uploadProjectDocuments(documentFiles);
       } catch (err) {
         console.error("Document upload failed:", err);
       }
@@ -192,8 +187,9 @@ export default function AddProjectModal({ onClose, onSave }) {
             />
           </div>
 
-          <div>
-            {/* <label className="block mb-1">Category</label>
+          {/* Category select (commented out, enable if needed) */}
+          {/* <div>
+            <label className="block mb-1">Category</label>
             <select
               name="category_id"
               value={form.category_id}
@@ -207,8 +203,8 @@ export default function AddProjectModal({ onClose, onSave }) {
                   {c.name}
                 </option>
               ))}
-            </select> */}
-          </div>
+            </select>
+          </div> */}
 
           <div>
             <label className="block mb-1">Location</label>
@@ -256,19 +252,87 @@ export default function AddProjectModal({ onClose, onSave }) {
             />
           </div>
 
+          {/* Amenities repeatable group */}
           <div>
-            <label className="block mb-1">Amenities (comma separated)</label>
-            <input
-              name="amenities"
-              value={form.amenities.join(", ")}
-              onChange={(e) =>
+            <label className="block mb-1 font-bold mb-2">Amenities</label>
+            {form.amenities.map((amenity, idx) => (
+              <div
+                key={idx}
+                className="border p-3 mb-2 rounded flex gap-3 items-center"
+              >
+                <input
+                  type="text"
+                  placeholder="Title"
+                  value={amenity.title}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setForm((f) => {
+                      const newAmenities = [...f.amenities];
+                      newAmenities[idx].title = val;
+                      return { ...f, amenities: newAmenities };
+                    });
+                  }}
+                  className="flex-grow border px-2 py-1 rounded"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Description"
+                  value={amenity.description}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setForm((f) => {
+                      const newAmenities = [...f.amenities];
+                      newAmenities[idx].description = val;
+                      return { ...f, amenities: newAmenities };
+                    });
+                  }}
+                  className="flex-grow border px-2 py-1 rounded"
+                />
+                <input
+                  type="text"
+                  placeholder="Image URL"
+                  value={amenity.imageUrl}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setForm((f) => {
+                      const newAmenities = [...f.amenities];
+                      newAmenities[idx].imageUrl = val;
+                      return { ...f, amenities: newAmenities };
+                    });
+                  }}
+                  className="flex-grow border px-2 py-1 rounded"
+                />
+                <button
+                  type="button"
+                  className="bg-red-600 text-white p-1 rounded"
+                  onClick={() => {
+                    setForm((f) => ({
+                      ...f,
+                      amenities: f.amenities.filter((_, i) => i !== idx),
+                    }));
+                  }}
+                  title="Remove amenity"
+                >
+                  &times;
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="bg-green-600 text-white px-3 py-1 rounded"
+              onClick={() =>
                 setForm((f) => ({
                   ...f,
-                  amenities: e.target.value.split(",").map((x) => x.trim()),
+                  amenities: [
+                    ...f.amenities,
+                    { title: "", description: "", imageUrl: "" },
+                  ],
                 }))
               }
-              className="w-full border px-3 py-2 rounded"
-            />
+            >
+              + Add Amenity
+            </button>
           </div>
 
           <div>
@@ -330,7 +394,23 @@ export default function AddProjectModal({ onClose, onSave }) {
             <button
               type="button"
               className="bg-gray-200 px-4 py-2 rounded"
-              onClick={() => window.location.reload()}
+              onClick={() =>
+                setForm({
+                  title: "",
+                  slug: "",
+                  description: "",
+                  hero_image: null,
+                  amenities: [],
+                  category_id: "",
+                  location: "",
+                  start_date: "",
+                  end_date: "",
+                  status: true,
+                  images: [],
+                  documents: [],
+                  meta: {},
+                })
+              }
             >
               Reset
             </button>
@@ -343,7 +423,7 @@ export default function AddProjectModal({ onClose, onSave }) {
             </button>
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || !isValid}
               className="bg-blue-600 text-white px-4 py-2 rounded disabled:bg-gray-400"
             >
               {saving ? "Adding..." : "Add Project"}

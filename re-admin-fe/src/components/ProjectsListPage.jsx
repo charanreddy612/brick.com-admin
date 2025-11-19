@@ -74,9 +74,9 @@ export default function ProjectsListPage() {
     setRefreshKey((k) => k + 1);
   };
 
-  const handleToggleStatus = async (id) => {
+  const handleToggleStatus = async (id, currentStatus) => {
     try {
-      await toggleProjectStatus(id);
+      await toggleProjectStatus(id, !currentStatus); // pass desired active state
       onAfterMutate();
     } catch (e) {
       console.error("Toggle status failed:", e?.message || e);
@@ -185,7 +185,7 @@ export default function ProjectsListPage() {
                         <button
                           title="Toggle Active"
                           className="bg-green-600 text-white px-2 py-1 rounded"
-                          onClick={() => handleToggleStatus(r.id)}
+                          onClick={() => handleToggleStatus(r.id, r.status)}
                         >
                           ✓
                         </button>

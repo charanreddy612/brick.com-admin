@@ -61,9 +61,11 @@ export async function updateProject(id, formData) {
 }
 
 // --------------------------- TOGGLE STATUS ---------------------------
-export async function toggleProjectStatus(id) {
+export async function toggleProjectStatus(id, activate) {
   try {
-    const res = await http.patch(`/projects/${id}/status`);
+    const res = await http.patch(`/projects/${id}/status`, {
+      active: activate,
+    });
     return { data: res.data?.data ?? null, error: res.data?.error ?? null };
   } catch (err) {
     return { data: null, error: { message: err.message } };
@@ -90,7 +92,8 @@ export async function uploadHeroImage(file) {
       headers: { "Content-Type": "multipart/form-data" },
     });
 
-    if (res.data?.error) throw new Error(res.data.error.message || "Hero image upload failed");
+    if (res.data?.error)
+      throw new Error(res.data.error.message || "Hero image upload failed");
     return res.data?.data?.url ?? null;
   } catch (err) {
     console.error("Upload hero image failed:", err);
@@ -108,7 +111,8 @@ export async function uploadProjectImages(files) {
       headers: { "Content-Type": "multipart/form-data" },
     });
 
-    if (res.data?.error) throw new Error(res.data.error.message || "Project images upload failed");
+    if (res.data?.error)
+      throw new Error(res.data.error.message || "Project images upload failed");
     return res.data?.data ?? [];
   } catch (err) {
     console.error("Upload project images failed:", err);
@@ -126,7 +130,10 @@ export async function uploadProjectDocuments(files) {
       headers: { "Content-Type": "multipart/form-data" },
     });
 
-    if (res.data?.error) throw new Error(res.data.error.message || "Project documents upload failed");
+    if (res.data?.error)
+      throw new Error(
+        res.data.error.message || "Project documents upload failed"
+      );
     return res.data?.data ?? [];
   } catch (err) {
     console.error("Upload project documents failed:", err);

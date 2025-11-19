@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import DOMPurify from "dompurify";
 import { getProject } from "../../services/projectService";
 
 export default function ViewProjectModal({ projectId, onClose }) {
@@ -8,7 +9,6 @@ export default function ViewProjectModal({ projectId, onClose }) {
 
   useEffect(() => {
     let mounted = true;
-
     (async () => {
       setLoading(true);
       try {
@@ -27,7 +27,6 @@ export default function ViewProjectModal({ projectId, onClose }) {
         if (mounted) setLoading(false);
       }
     })();
-
     return () => (mounted = false);
   }, [projectId]);
 
@@ -35,7 +34,6 @@ export default function ViewProjectModal({ projectId, onClose }) {
 
   const openLightbox = (src) => setLightbox({ open: true, src });
   const closeLightbox = () => setLightbox({ open: false, src: "" });
-
   const getFileName = (url) => url.split("/").pop();
 
   return (
@@ -47,7 +45,6 @@ export default function ViewProjectModal({ projectId, onClose }) {
             ✖
           </button>
         </div>
-
         {loading ? (
           <p>Loading…</p>
         ) : !project ? (
@@ -65,11 +62,13 @@ export default function ViewProjectModal({ projectId, onClose }) {
             </div>
             <div
               className="p-2 border rounded bg-gray-50 max-h-40 overflow-y-auto"
-              dangerouslySetInnerHTML={{ __html: project.description || "—" }}
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(project.description || "—"),
+              }}
             />
 
             <div>
-              <strong>Hero Image:</strong>
+              <strong>Hero Image:</strong>{" "}
               {project.hero_image ? (
                 <img
                   src={project.hero_image}
@@ -83,31 +82,52 @@ export default function ViewProjectModal({ projectId, onClose }) {
             </div>
 
             <div>
-              <strong>Amenities:</strong>{" "}
-              {project.amenities?.length ? project.amenities.join(", ") : "—"}
+              <strong>Amenities:</strong>
+              {Array.isArray(project.amenities) &&
+              project.amenities.length > 0 ? (
+                <ul className="list-disc pl-5 mt-1 space-y-1">
+                  {project.amenities.map((amenity, idx) => (
+                    <li key={idx} className="flex flex-col">
+                      <span className="font-semibold">
+                        {amenity.title || "Untitled"}
+                      </span>
+                      {amenity.description && (
+                        <span className="text-sm text-gray-700">
+                          {amenity.description}
+                        </span>
+                      )}
+                      {amenity.imageUrl && (
+                        <img
+                          src={amenity.imageUrl}
+                          alt={amenity.title || "Amenity image"}
+                          className="max-h-20 mt-1 rounded cursor-pointer hover:opacity-80"
+                          onClick={() => openLightbox(amenity.imageUrl)}
+                        />
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                " —"
+              )}
             </div>
 
-            <div>
-              <strong>Category ID:</strong> {project.category_id || "—"}
-            </div>
+            {/* <div><strong>Category ID:</strong> {project.category_id || "—"}</div> */}
             <div>
               <strong>Location:</strong> {project.location || "—"}
             </div>
-
             <div>
               <strong>Start Date:</strong>{" "}
               {project.start_date
                 ? new Date(project.start_date).toLocaleDateString()
                 : "—"}
             </div>
-
             <div>
               <strong>End Date:</strong>{" "}
               {project.end_date
                 ? new Date(project.end_date).toLocaleDateString()
                 : "—"}
             </div>
-
             <div>
               <strong>Status:</strong> {project.status ? "Active" : "Inactive"}
             </div>
@@ -168,6 +188,12 @@ export default function ViewProjectModal({ projectId, onClose }) {
         <div
           className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 cursor-pointer"
           onClick={closeLightbox}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") closeLightbox();
+          }}
+          tabIndex={0}
+          role="dialog"
+          aria-modal="true"
         >
           <img
             src={lightbox.src}
