@@ -285,24 +285,24 @@ export default function EditProjectModal({ id, onClose, onSave }) {
             {form.amenities.map((amenity, idx) => (
               <div
                 key={idx}
-                className="border p-3 mb-2 rounded flex gap-3 items-center"
+                className="border p-4 mb-4 rounded flex flex-col gap-3"
               >
                 <input
                   type="text"
                   placeholder="Title"
                   value={amenity.title}
                   onChange={(e) => updateAmenity(idx, "title", e.target.value)}
-                  className="flex-grow border px-2 py-1 rounded"
+                  className="border px-3 py-2 rounded"
                   required
                 />
                 <SafeQuill
                   theme="snow"
                   value={amenity.description}
                   onChange={(val) => updateAmenity(idx, "description", val)}
-                  className="flex-grow border rounded h-20"
+                  className="border rounded h-24"
                 />
-                <div className="flex flex-col items-center">
-                  <label className="cursor-pointer bg-gray-200 px-2 py-1 rounded text-sm">
+                <div className="flex items-center gap-4">
+                  <label className="cursor-pointer bg-gray-200 px-3 py-1 rounded text-sm">
                     Choose Image
                     <input
                       type="file"
@@ -317,18 +317,18 @@ export default function EditProjectModal({ id, onClose, onSave }) {
                     <img
                       src={amenity.imagePreview || amenity.imageUrl}
                       alt="Amenity preview"
-                      className="h-16 w-16 object-cover rounded mt-1"
+                      className="h-20 w-20 object-cover rounded"
                     />
                   )}
+                  <button
+                    type="button"
+                    className="ml-auto bg-red-600 text-white px-3 py-1 rounded"
+                    onClick={() => removeAmenity(idx)}
+                    title="Remove amenity"
+                  >
+                    Remove
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  className="bg-red-600 text-white p-1 rounded"
-                  onClick={() => removeAmenity(idx)}
-                  title="Remove amenity"
-                >
-                  &times;
-                </button>
               </div>
             ))}
             <button
@@ -339,6 +339,7 @@ export default function EditProjectModal({ id, onClose, onSave }) {
               + Add Amenity
             </button>
           </div>
+
           <div>
             <label className="block mb-1">Hero Image</label>
             <input
