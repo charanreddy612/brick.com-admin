@@ -157,7 +157,7 @@ export default function ViewProjectModal({ projectId, onClose }) {
               <strong>Status:</strong> {project.status ? "Active" : "Inactive"}
             </div>
 
-            <div>
+            {/* <div>
               <strong>Images:</strong>
               {project.images?.length ? (
                 <div className="flex flex-wrap gap-3 mt-2">
@@ -196,7 +196,7 @@ export default function ViewProjectModal({ projectId, onClose }) {
               ) : (
                 <span> —</span>
               )}
-            </div>
+            </div> */}
 
             <div>
               <strong>Meta:</strong>

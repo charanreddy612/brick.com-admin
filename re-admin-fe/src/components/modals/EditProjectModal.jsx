@@ -10,7 +10,7 @@ import SafeQuill from "../common/SafeQuill";
 import useEscClose from "../hooks/useEscClose";
 import AmenityModal from "./AmenityModal.jsx"; // The popup modal component
 
-export default function EditProjectModal({ id, onClose, onSave }) {
+export default function EditProjectModal({ projectId, onClose, onSave }) {
   const [form, setForm] = useState(null);
   const [saving, setSaving] = useState(false);
   const [heroPreview, setHeroPreview] = useState("");
@@ -25,7 +25,7 @@ export default function EditProjectModal({ id, onClose, onSave }) {
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const { data, error } = await getProject(id);
+      const { data, error } = await getProject(projectId);
       if (error || !data) return;
       if (!mounted) return;
 
@@ -57,7 +57,7 @@ export default function EditProjectModal({ id, onClose, onSave }) {
       setHeroPreview(data.hero_image || "");
     })();
     return () => (mounted = false);
-  }, [id]);
+  }, [projectId]);
 
   if (!form) return null;
 
@@ -193,7 +193,7 @@ export default function EditProjectModal({ id, onClose, onSave }) {
     fd.append("documents", JSON.stringify(finalDocs));
 
     try {
-      const { error } = await updateProject(id, fd);
+      const { error } = await updateProject(projectId, fd);
       if (error) throw new Error(error.message || "Update failed");
       onSave?.();
       onClose?.();
