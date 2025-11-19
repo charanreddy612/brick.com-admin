@@ -46,6 +46,15 @@ export default function AddProjectModal({ onClose, onSave }) {
     }
   };
 
+  const handleMetaChange = (e) => {
+    try {
+      const val = JSON.parse(e.target.value);
+      setForm((f) => ({ ...f, meta: val }));
+    } catch {
+      setForm((f) => ({ ...f, meta: {} }));
+    }
+  };
+
   const handleHeroImage = (file) => {
     setForm((f) => ({ ...f, hero_image: file }));
     if (heroPreview) URL.revokeObjectURL(heroPreview);
