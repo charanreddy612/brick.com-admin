@@ -70,8 +70,8 @@ export async function createProject(req, res) {
       slug: b.slug,
       description: b.description,
       location: b.location,
-      start_date: b.start_date,
-      end_date: b.end_date,
+      start_date: b.start_date || null,
+      end_date: b.end_date || null,
       status: toBool(b.status),
       amenities: parseJSON(b.amenities, []), // expects array of objects
       meta: parseJSON(b.meta, {}),
@@ -126,8 +126,10 @@ export async function updateProject(req, res) {
       slug: b.slug ?? existing.slug,
       description: b.description ?? existing.description,
       location: b.location ?? existing.location,
-      start_date: b.start_date ?? existing.start_date,
-      end_date: b.end_date ?? existing.end_date,
+      start_date:
+        b.start_date !== undefined && b.start_date !== "" ? b.start_date : null,
+      end_date:
+        b.end_date !== undefined && b.end_date !== "" ? b.end_date : null,
       status: b.status !== undefined ? toBool(b.status) : existing.status,
       amenities:
         b.amenities !== undefined
@@ -276,15 +278,13 @@ export async function uploadHeroImage(req, res) {
     return res.json({ data: { url }, error: null });
   } catch (err) {
     console.error("Hero image upload failed:", err);
-    return res
-      .status(500)
-      .json({
-        data: null,
-        error: {
-          message: "Hero image upload failed",
-          details: err.message || err,
-        },
-      });
+    return res.status(500).json({
+      data: null,
+      error: {
+        message: "Hero image upload failed",
+        details: err.message || err,
+      },
+    });
   }
 }
 
@@ -312,15 +312,13 @@ export async function uploadProjectImages(req, res) {
     return res.json({ data: urls, error: null });
   } catch (err) {
     console.error("Project images upload failed:", err);
-    return res
-      .status(500)
-      .json({
-        data: null,
-        error: {
-          message: "Project images upload failed",
-          details: err.message || err,
-        },
-      });
+    return res.status(500).json({
+      data: null,
+      error: {
+        message: "Project images upload failed",
+        details: err.message || err,
+      },
+    });
   }
 }
 
@@ -348,15 +346,13 @@ export async function uploadProjectDocuments(req, res) {
     return res.json({ data: urls, error: null });
   } catch (err) {
     console.error("Document upload failed:", err);
-    return res
-      .status(500)
-      .json({
-        data: null,
-        error: {
-          message: "Document upload failed",
-          details: err.message || err,
-        },
-      });
+    return res.status(500).json({
+      data: null,
+      error: {
+        message: "Document upload failed",
+        details: err.message || err,
+      },
+    });
   }
 }
 
@@ -377,24 +373,20 @@ export async function uploadAmenityImage(req, res) {
       file.mimetype
     );
     if (error)
-      return res
-        .status(500)
-        .json({
-          data: null,
-          error: { message: "Amenity image upload failed", details: error },
-        });
+      return res.status(500).json({
+        data: null,
+        error: { message: "Amenity image upload failed", details: error },
+      });
     console.info("Amenity image uploaded, url:", url);
     return res.json({ data: { url }, error: null });
   } catch (err) {
     console.error("Amenity image upload error:", err);
-    return res
-      .status(500)
-      .json({
-        data: null,
-        error: {
-          message: "Amenity image upload error",
-          details: err.message || err,
-        },
-      });
+    return res.status(500).json({
+      data: null,
+      error: {
+        message: "Amenity image upload error",
+        details: err.message || err,
+      },
+    });
   }
 }
