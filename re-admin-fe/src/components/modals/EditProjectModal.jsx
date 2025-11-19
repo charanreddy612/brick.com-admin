@@ -15,12 +15,14 @@ export default function EditProjectModal({ projectId, onClose, onSave }) {
   const [saving, setSaving] = useState(false);
   const [heroPreview, setHeroPreview] = useState("");
   const [newHeroFile, setNewHeroFile] = useState(null);
-  const [newImages, setNewImages] = useState([]);
-  const [newDocuments, setNewDocuments] = useState([]);
+  // const [newImages, setNewImages] = useState([]);
+  // const [newDocuments, setNewDocuments] = useState([]);
   const quillRef = useRef(null);
 
   const [showAmenityModal, setShowAmenityModal] = useState(false);
   const [selectedAmenityIndex, setSelectedAmenityIndex] = useState(null);
+
+  useEscClose(onClose);
 
   useEffect(() => {
     let mounted = true;
@@ -204,8 +206,6 @@ export default function EditProjectModal({ projectId, onClose, onSave }) {
       setSaving(false);
     }
   };
-
-  useEscClose(onClose);
 
   return (
     <>
