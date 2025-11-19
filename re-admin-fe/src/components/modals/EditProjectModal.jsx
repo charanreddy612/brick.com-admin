@@ -2,12 +2,13 @@ import React, { useEffect, useState, useRef } from "react";
 import {
   getProject,
   updateProject,
+  uploadAmenityImage, // new service for amenity images
   uploadProjectImages,
   uploadProjectDocuments,
-  uploadAmenityImage, // new service needed
 } from "../../services/projectService";
 import SafeQuill from "../common/SafeQuill";
 import useEscClose from "../hooks/useEscClose";
+import AmenityModal from "../common/AmenityModal"; // The popup modal component
 
 export default function EditProjectModal({ id, onClose, onSave }) {
   const [form, setForm] = useState(null);
@@ -18,6 +19,9 @@ export default function EditProjectModal({ id, onClose, onSave }) {
   const [newDocuments, setNewDocuments] = useState([]);
   const quillRef = useRef(null);
 
+  const [showAmenityModal, setShowAmenityModal] = useState(false);
+  const [selectedAmenityIndex, setSelectedAmenityIndex] = useState(null);
+
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -25,7 +29,6 @@ export default function EditProjectModal({ id, onClose, onSave }) {
       if (error || !data) return;
       if (!mounted) return;
 
-      // Initialize amenities with imageFile and imagePreview placeholders
       const amenitiesWithPreview = Array.isArray(data.amenities)
         ? data.amenities.map((a) => ({
             ...a,
@@ -92,41 +95,35 @@ export default function EditProjectModal({ id, onClose, onSave }) {
     setHeroPreview(file ? URL.createObjectURL(file) : form.hero_image);
   };
 
-  // Amenities handlers: update, add, remove, image change
-  const updateAmenity = (index, field, value) => {
-    const newAmenities = [...form.amenities];
-    newAmenities[index] = { ...newAmenities[index], [field]: value };
-    setForm((f) => ({ ...f, amenities: newAmenities }));
+  // Amenities popup handlers
+  const handleAddAmenityClick = () => {
+    setSelectedAmenityIndex(null);
+    setShowAmenityModal(true);
   };
 
-  const handleAmenityImageChange = (index, file) => {
-    const newAmenities = [...form.amenities];
-    if (newAmenities[index]?.imagePreview)
-      URL.revokeObjectURL(newAmenities[index].imagePreview);
-    newAmenities[index].imageFile = file;
-    newAmenities[index].imagePreview = file ? URL.createObjectURL(file) : "";
-    setForm((f) => ({ ...f, amenities: newAmenities }));
+  const handleEditAmenityClick = (idx) => {
+    setSelectedAmenityIndex(idx);
+    setShowAmenityModal(true);
   };
 
-  const addAmenity = () => {
+  const handleAmenitySave = (amenityData) => {
+    setForm((f) => {
+      const newAmenities = [...f.amenities];
+      if (selectedAmenityIndex === null) {
+        newAmenities.push(amenityData);
+      } else {
+        newAmenities[selectedAmenityIndex] = amenityData;
+      }
+      return { ...f, amenities: newAmenities };
+    });
+    setShowAmenityModal(false);
+  };
+
+  const handleRemoveAmenity = (idx) => {
     setForm((f) => ({
       ...f,
-      amenities: [
-        ...f.amenities,
-        {
-          title: "",
-          description: "",
-          imageFile: null,
-          imagePreview: "",
-          imageUrl: "",
-        },
-      ],
+      amenities: f.amenities.filter((_, i) => i !== idx),
     }));
-  };
-
-  const removeAmenity = (index) => {
-    const newAmenities = form.amenities.filter((_, i) => i !== index);
-    setForm((f) => ({ ...f, amenities: newAmenities }));
   };
 
   const isValid = form.title.trim() !== "" && form.slug.trim() !== "";
@@ -211,203 +208,190 @@ export default function EditProjectModal({ id, onClose, onSave }) {
   useEscClose(onClose);
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white w-full max-w-4xl rounded shadow-lg p-6 max-h-[95vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Edit Project</h2>
-          <button className="border px-3 py-1 rounded" onClick={onClose}>
-            Back
-          </button>
-        </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block mb-1">Title</label>
-            <input
-              name="title"
-              value={form.title}
-              onChange={handleChange}
-              onBlur={handleSlugAuto}
-              className="w-full border px-3 py-2 rounded"
-            />
-          </div>
-          <div>
-            <label className="block mb-1">Slug</label>
-            <input
-              name="slug"
-              value={form.slug}
-              onChange={handleChange}
-              className="w-full border px-3 py-2 rounded"
-            />
-          </div>
-          <div>
-            <label className="block mb-1">Location</label>
-            <input
-              name="location"
-              value={form.location}
-              onChange={handleChange}
-              className="w-full border px-3 py-2 rounded"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block mb-1">Start Date</label>
-              <input
-                type="date"
-                name="start_date"
-                value={form.start_date}
-                onChange={handleChange}
-                className="w-full border px-3 py-2 rounded"
-              />
-            </div>
-            <div>
-              <label className="block mb-1">End Date</label>
-              <input
-                type="date"
-                name="end_date"
-                value={form.end_date}
-                onChange={handleChange}
-                className="w-full border px-3 py-2 rounded"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block mb-1">Description</label>
-            <SafeQuill
-              ref={quillRef}
-              theme="snow"
-              value={form.description}
-              onChange={(val) => setForm((f) => ({ ...f, description: val }))}
-              className="border rounded h-40"
-            />
-          </div>
-          <div>
-            <label className="block mb-1 font-bold">Amenities</label>
-            {form.amenities.map((amenity, idx) => (
-              <div
-                key={idx}
-                className="border p-4 mb-4 rounded flex flex-col gap-3"
-              >
-                <input
-                  type="text"
-                  placeholder="Title"
-                  value={amenity.title}
-                  onChange={(e) => updateAmenity(idx, "title", e.target.value)}
-                  className="border px-3 py-2 rounded"
-                  required
-                />
-                <SafeQuill
-                  theme="snow"
-                  value={amenity.description}
-                  onChange={(val) => updateAmenity(idx, "description", val)}
-                  className="border rounded h-24"
-                />
-                <div className="flex items-center gap-4">
-                  <label className="cursor-pointer bg-gray-200 px-3 py-1 rounded text-sm">
-                    Choose Image
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) =>
-                        handleAmenityImageChange(idx, e.target.files[0])
-                      }
-                    />
-                  </label>
-                  {(amenity.imagePreview || amenity.imageUrl) && (
-                    <img
-                      src={amenity.imagePreview || amenity.imageUrl}
-                      alt="Amenity preview"
-                      className="h-20 w-20 object-cover rounded"
-                    />
-                  )}
-                  <button
-                    type="button"
-                    className="ml-auto bg-red-600 text-white px-3 py-1 rounded"
-                    onClick={() => removeAmenity(idx)}
-                    title="Remove amenity"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            ))}
-            <button
-              type="button"
-              className="bg-green-600 text-white px-3 py-1 rounded"
-              onClick={addAmenity}
-            >
-              + Add Amenity
+    <>
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div className="bg-white w-full max-w-4xl rounded shadow-lg p-6 max-h-[95vh] overflow-y-auto">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Edit Project</h2>
+            <button className="border px-3 py-1 rounded" onClick={onClose}>
+              Back
             </button>
           </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block mb-1">Title</label>
+              <input
+                name="title"
+                value={form.title}
+                onChange={handleChange}
+                onBlur={handleSlugAuto}
+                className="w-full border px-3 py-2 rounded"
+              />
+            </div>
+            <div>
+              <label className="block mb-1">Slug</label>
+              <input
+                name="slug"
+                value={form.slug}
+                onChange={handleChange}
+                className="w-full border px-3 py-2 rounded"
+              />
+            </div>
+            <div>
+              <label className="block mb-1">Location</label>
+              <input
+                name="location"
+                value={form.location}
+                onChange={handleChange}
+                className="w-full border px-3 py-2 rounded"
+              />
+            </div>
 
-          <div>
-            <label className="block mb-1">Hero Image</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => handleHeroChange(e.target.files[0])}
-            />
-            {heroPreview && (
-              <img
-                src={heroPreview}
-                className="mt-2 w-48 h-32 object-cover rounded"
-                alt="hero"
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-1">Start Date</label>
+                <input
+                  type="date"
+                  name="start_date"
+                  value={form.start_date}
+                  onChange={handleChange}
+                  className="w-full border px-3 py-2 rounded"
+                />
+              </div>
+              <div>
+                <label className="block mb-1">End Date</label>
+                <input
+                  type="date"
+                  name="end_date"
+                  value={form.end_date}
+                  onChange={handleChange}
+                  className="w-full border px-3 py-2 rounded"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block mb-1">Hero Image</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleHeroChange(e.target.files[0])}
               />
-            )}
-          </div>
-          <div>
-            <label className="block mb-1">Add More Images</label>
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={(e) => setNewImages(Array.from(e.target.files))}
-            />
-          </div>
-          <div>
-            <label className="block mb-1">Add More Documents</label>
-            <input
-              type="file"
-              multiple
-              onChange={(e) => setNewDocuments(Array.from(e.target.files))}
-            />
-          </div>
-          <div>
-            <label className="block mb-1">Meta JSON</label>
-            <textarea
-              rows={3}
-              value={JSON.stringify(form.meta)}
-              onChange={handleMetaChange}
-              className="w-full border px-3 py-2 rounded"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="status"
-              checked={!!form.status}
-              onChange={handleChange}
-            />
-            <span>Active</span>
-          </div>
-          <div className="flex justify-end gap-3">
-            <button
-              type="button"
-              className="border px-4 py-2 rounded"
-              onClick={onClose}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={saving || !isValid}
-              className="bg-blue-600 text-white px-4 py-2 rounded disabled:bg-gray-400"
-            >
-              {saving ? "Updating..." : "Update Project"}
-            </button>
-          </div>
-        </form>
+              {heroPreview && (
+                <img
+                  src={heroPreview}
+                  alt="hero"
+                  className="mt-2 w-48 h-32 object-cover rounded"
+                />
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="status"
+                checked={!!form.status}
+                onChange={handleChange}
+              />
+              <span>Active</span>
+            </div>
+
+            <div>
+              <label className="block mb-1">Description</label>
+              <SafeQuill
+                ref={quillRef}
+                theme="snow"
+                value={form.description}
+                onChange={(val) => setForm((f) => ({ ...f, description: val }))}
+                className="border rounded h-40"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 font-bold">Amenities</label>
+              <div className="flex flex-wrap gap-3 mb-3">
+                {form.amenities.map((amenity, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-3 border rounded px-3 py-1 max-w-xs"
+                  >
+                    <div>
+                      <div className="font-semibold truncate max-w-xs">
+                        {amenity.title || "Untitled"}
+                      </div>
+                      <div className="text-xs text-gray-600 truncate max-w-xs">
+                        {amenity.description
+                          ? amenity.description
+                              .replace(/<[^>]+>/g, "")
+                              .slice(0, 40) + "..."
+                          : ""}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleEditAmenityClick(idx)}
+                      className="text-blue-600 hover:underline text-sm"
+                      title="Edit amenity"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleRemoveAmenity(idx)}
+                      className="text-red-600 hover:underline text-sm"
+                      title="Remove amenity"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                className="bg-green-600 text-white px-3 py-1 rounded"
+                onClick={handleAddAmenityClick}
+              >
+                + Add Amenity
+              </button>
+            </div>
+
+            <div>
+              <label className="block mb-1">Meta JSON</label>
+              <textarea
+                rows={3}
+                value={JSON.stringify(form.meta)}
+                onChange={handleMetaChange}
+                className="w-full border px-3 py-2 rounded"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                className="border px-4 py-2 rounded"
+                onClick={onClose}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={saving || !isValid}
+                className="bg-blue-600 text-white px-4 py-2 rounded disabled:bg-gray-400"
+              >
+                {saving ? "Updating..." : "Update Project"}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+
+      <AmenityModal
+        show={showAmenityModal}
+        amenity={
+          selectedAmenityIndex !== null
+            ? form.amenities[selectedAmenityIndex]
+            : null
+        }
+        onClose={() => setShowAmenityModal(false)}
+        onSave={handleAmenitySave}
+      />
+    </>
   );
 }
