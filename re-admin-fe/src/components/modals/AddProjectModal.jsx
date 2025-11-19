@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { addProject, uploadAmenityImage } from "../../services/projectService";
 import useEscClose from "../hooks/useEscClose";
 import SafeQuill from "../common/SafeQuill";
-import AmenityModal from "../common/AmenityModal"; // Ensure this is implemented
+import AmenityModal from "./AmenityModal.jsx"; // Ensure this is implemented
 
 export default function AddProjectModal({ onClose, onSave }) {
   const [form, setForm] = useState({

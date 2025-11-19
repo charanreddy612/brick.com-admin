@@ -8,7 +8,7 @@ import {
 } from "../../services/projectService";
 import SafeQuill from "../common/SafeQuill";
 import useEscClose from "../hooks/useEscClose";
-import AmenityModal from "../common/AmenityModal"; // The popup modal component
+import AmenityModal from "./AmenityModal.jsx"; // The popup modal component
 
 export default function EditProjectModal({ id, onClose, onSave }) {
   const [form, setForm] = useState(null);
