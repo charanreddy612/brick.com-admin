@@ -27,12 +27,10 @@ export async function listProjects(req, res) {
     const { rows, total } = await projectRepo.list({ page, limit, title });
     return res.json({ data: { rows, total }, error: null });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        data: null,
-        error: { message: "Error listing projects", details: err.message },
-      });
+    return res.status(500).json({
+      data: null,
+      error: { message: "Error listing projects", details: err.message },
+    });
   }
 }
 
@@ -47,12 +45,10 @@ export async function getProject(req, res) {
         .json({ data: null, error: { message: "Project not found" } });
     return res.json({ data, error: null });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        data: null,
-        error: { message: "Error fetching project", details: err.message },
-      });
+    return res.status(500).json({
+      data: null,
+      error: { message: "Error fetching project", details: err.message },
+    });
   }
 }
 
@@ -95,12 +91,10 @@ export async function createProject(req, res) {
     const created = await projectRepo.insert(toInsert);
     return res.status(201).json({ data: created, error: null });
   } catch (err) {
-    return res
-      .status(400)
-      .json({
-        data: null,
-        error: { code: "VALIDATION_ERROR", message: err.message },
-      });
+    return res.status(400).json({
+      data: null,
+      error: { code: "VALIDATION_ERROR", message: err.message },
+    });
   }
 }
 
@@ -176,12 +170,10 @@ export async function updateProject(req, res) {
     const updated = await projectRepo.update(id, patch);
     return res.json({ data: updated, error: null });
   } catch (err) {
-    return res
-      .status(400)
-      .json({
-        data: null,
-        error: { code: "VALIDATION_ERROR", message: err.message },
-      });
+    return res.status(400).json({
+      data: null,
+      error: { code: "VALIDATION_ERROR", message: err.message },
+    });
   }
 }
 
@@ -191,12 +183,10 @@ export async function updateProjectStatus(req, res) {
     const active =
       req.body && "active" in req.body ? toBool(req.body.active) : null;
     if (active === null)
-      return res
-        .status(400)
-        .json({
-          data: null,
-          error: { code: "BAD_REQUEST", message: "active required" },
-        });
+      return res.status(400).json({
+        data: null,
+        error: { code: "BAD_REQUEST", message: "active required" },
+      });
     const updated = await projectRepo.setStatus(req.params.id, active);
     if (!updated)
       return res
@@ -204,12 +194,10 @@ export async function updateProjectStatus(req, res) {
         .json({ data: null, error: { message: "Project not found" } });
     return res.json({ data: updated, error: null });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        data: null,
-        error: { message: "Error updating status", details: err.message },
-      });
+    return res.status(500).json({
+      data: null,
+      error: { message: "Error updating status", details: err.message },
+    });
   }
 }
 
@@ -235,12 +223,10 @@ export async function deleteProject(req, res) {
       error: null,
     });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        data: null,
-        error: { message: "Error deleting project", details: err.message },
-      });
+    return res.status(500).json({
+      data: null,
+      error: { message: "Error deleting project", details: err.message },
+    });
   }
 }
 
@@ -262,15 +248,13 @@ export async function uploadHeroImage(req, res) {
     if (error) throw error;
     return res.json({ data: { url }, error: null });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        data: null,
-        error: {
-          message: "Hero image upload failed",
-          details: err.message || err,
-        },
-      });
+    return res.status(500).json({
+      data: null,
+      error: {
+        message: "Hero image upload failed",
+        details: err.message || err,
+      },
+    });
   }
 }
 
@@ -295,15 +279,13 @@ export async function uploadProjectImages(req, res) {
     }
     return res.json({ data: urls, error: null });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        data: null,
-        error: {
-          message: "Project images upload failed",
-          details: err.message || err,
-        },
-      });
+    return res.status(500).json({
+      data: null,
+      error: {
+        message: "Project images upload failed",
+        details: err.message || err,
+      },
+    });
   }
 }
 
@@ -328,14 +310,48 @@ export async function uploadProjectDocuments(req, res) {
     }
     return res.json({ data: urls, error: null });
   } catch (err) {
-    return res
-      .status(500)
-      .json({
+    return res.status(500).json({
+      data: null,
+      error: {
+        message: "Document upload failed",
+        details: err.message || err,
+      },
+    });
+  }
+}
+
+// Upload amenity image
+export async function uploadAmenityImage(req, res) {
+  try {
+    if (!req.file)
+      return res.status(400).json({
         data: null,
-        error: {
-          message: "Document upload failed",
-          details: err.message || err,
-        },
+        error: { message: "No file uploaded" },
       });
+
+    const file = req.file;
+    const { url, error } = await uploadImageBuffer(
+      BUCKET,
+      IMAGES_FOLDER, // Use distinct folder or name it as you wish
+      file.buffer,
+      file.originalname,
+      file.mimetype
+    );
+
+    if (error)
+      return res.status(500).json({
+        data: null,
+        error: { message: "Amenity image upload failed", details: error },
+      });
+
+    return res.json({ data: { url }, error: null });
+  } catch (err) {
+    return res.status(500).json({
+      data: null,
+      error: {
+        message: "Amenity image upload error",
+        details: err.message || err,
+      },
+    });
   }
 }

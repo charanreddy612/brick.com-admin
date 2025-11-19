@@ -140,3 +140,19 @@ export async function uploadProjectDocuments(files) {
     throw err;
   }
 }
+
+// in projectService.js (example)
+export async function uploadAmenityImage(file) {
+  const fd = new FormData();
+  fd.append("image", file);
+  try {
+    const res = await http.post("/projects/upload/amenity-image", fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    if (res.data?.error) throw new Error(res.data.error.message || "Amenity image upload failed");
+    return res.data?.data?.url ?? null;
+  } catch (err) {
+    console.error("Upload amenity image failed:", err);
+    throw err;
+  }
+}

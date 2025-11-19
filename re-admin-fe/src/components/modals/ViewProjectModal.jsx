@@ -100,7 +100,7 @@ export default function ViewProjectModal({ projectId, onClose }) {
                         <img
                           src={amenity.imageUrl}
                           alt={amenity.title || "Amenity image"}
-                          className="max-h-20 mt-1 rounded cursor-pointer hover:opacity-80"
+                          className="h-16 w-16 object-cover rounded mt-1 cursor-pointer hover:opacity-80"
                           onClick={() => openLightbox(amenity.imageUrl)}
                         />
                       )}
@@ -112,7 +112,7 @@ export default function ViewProjectModal({ projectId, onClose }) {
               )}
             </div>
 
-            {/* <div><strong>Category ID:</strong> {project.category_id || "—"}</div> */}
+            {/* Additional project info fields */}
             <div>
               <strong>Location:</strong> {project.location || "—"}
             </div>
@@ -131,7 +131,6 @@ export default function ViewProjectModal({ projectId, onClose }) {
             <div>
               <strong>Status:</strong> {project.status ? "Active" : "Inactive"}
             </div>
-
             <div>
               <strong>Images:</strong>
               {project.images?.length ? (
@@ -150,7 +149,6 @@ export default function ViewProjectModal({ projectId, onClose }) {
                 " —"
               )}
             </div>
-
             <div>
               <strong>Documents:</strong>
               {project.documents?.length ? (
@@ -172,7 +170,6 @@ export default function ViewProjectModal({ projectId, onClose }) {
                 " —"
               )}
             </div>
-
             <div>
               <strong>Meta:</strong>
               <pre className="bg-gray-100 p-2 rounded overflow-x-auto max-h-40">
@@ -182,7 +179,6 @@ export default function ViewProjectModal({ projectId, onClose }) {
           </div>
         )}
       </div>
-
       {/* Lightbox overlay */}
       {lightbox.open && (
         <div

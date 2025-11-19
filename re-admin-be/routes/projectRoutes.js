@@ -13,14 +13,14 @@ router.get("/:id", projectController.getProject);
 // Create project (multipart for files)
 router.post(
   "/",
-  uploadMemory.single("hero_image"), // switched to .single
+  uploadMemory.single("hero_image"),
   projectController.createProject
 );
 
 // Update project (multipart for files)
 router.put(
   "/:id",
-  uploadMemory.single("hero_image"), // switched to .single
+  uploadMemory.single("hero_image"),
   projectController.updateProject
 );
 
@@ -47,6 +47,13 @@ router.post(
   "/upload/documents",
   uploadMemory.array("documents", 20),
   projectController.uploadProjectDocuments
+);
+
+// New route: Upload Amenity Image
+router.post(
+  "/upload/amenity-image",
+  uploadMemory.single("image"), // expects field name 'image'
+  projectController.uploadAmenityImage
 );
 
 export default router;

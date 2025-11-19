@@ -4,6 +4,7 @@ import {
   updateProject,
   uploadProjectImages,
   uploadProjectDocuments,
+  uploadAmenityImage, // new service needed
 } from "../../services/projectService";
 import SafeQuill from "../common/SafeQuill";
 import useEscClose from "../hooks/useEscClose";
@@ -17,13 +18,21 @@ export default function EditProjectModal({ id, onClose, onSave }) {
   const [newDocuments, setNewDocuments] = useState([]);
   const quillRef = useRef(null);
 
-  // Load project data
   useEffect(() => {
     let mounted = true;
     (async () => {
       const { data, error } = await getProject(id);
       if (error || !data) return;
       if (!mounted) return;
+
+      // Initialize amenities with imageFile and imagePreview placeholders
+      const amenitiesWithPreview = Array.isArray(data.amenities)
+        ? data.amenities.map((a) => ({
+            ...a,
+            imageFile: null,
+            imagePreview: "",
+          }))
+        : [];
 
       setForm({
         title: data.title || "",
@@ -34,7 +43,7 @@ export default function EditProjectModal({ id, onClose, onSave }) {
         start_date: data.start_date || "",
         end_date: data.end_date || "",
         status: !!data.status,
-        amenities: Array.isArray(data.amenities) ? data.amenities : [],
+        amenities: amenitiesWithPreview,
         hero_image: data.hero_image || "",
         images: Array.isArray(data.images) ? data.images : [],
         documents: Array.isArray(data.documents) ? data.documents : [],
@@ -57,7 +66,6 @@ export default function EditProjectModal({ id, onClose, onSave }) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
 
-  // Handlers
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm((f) => ({ ...f, [name]: type === "checkbox" ? checked : value }));
@@ -84,29 +92,49 @@ export default function EditProjectModal({ id, onClose, onSave }) {
     setHeroPreview(file ? URL.createObjectURL(file) : form.hero_image);
   };
 
-  // Amenities handlers: add, update, remove
+  // Amenities handlers: update, add, remove, image change
   const updateAmenity = (index, field, value) => {
     const newAmenities = [...form.amenities];
     newAmenities[index] = { ...newAmenities[index], [field]: value };
     setForm((f) => ({ ...f, amenities: newAmenities }));
   };
+
+  const handleAmenityImageChange = (index, file) => {
+    const newAmenities = [...form.amenities];
+    if (newAmenities[index]?.imagePreview)
+      URL.revokeObjectURL(newAmenities[index].imagePreview);
+    newAmenities[index].imageFile = file;
+    newAmenities[index].imagePreview = file ? URL.createObjectURL(file) : "";
+    setForm((f) => ({ ...f, amenities: newAmenities }));
+  };
+
   const addAmenity = () => {
     setForm((f) => ({
       ...f,
-      amenities: [...f.amenities, { title: "", description: "", imageUrl: "" }],
+      amenities: [
+        ...f.amenities,
+        {
+          title: "",
+          description: "",
+          imageFile: null,
+          imagePreview: "",
+          imageUrl: "",
+        },
+      ],
     }));
   };
+
   const removeAmenity = (index) => {
     const newAmenities = form.amenities.filter((_, i) => i !== index);
     setForm((f) => ({ ...f, amenities: newAmenities }));
   };
 
-  // Validate required fields
   const isValid = form.title.trim() !== "" && form.slug.trim() !== "";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (saving || !isValid) return;
+
     setSaving(true);
 
     let finalImages = [...form.images];
@@ -129,6 +157,27 @@ export default function EditProjectModal({ id, onClose, onSave }) {
       }
     }
 
+    // Upload amenity images and get URLs
+    const amenitiesWithUrls = [];
+    for (const amenity of form.amenities) {
+      let imageUrl = amenity.imageUrl || "";
+      if (amenity.imageFile) {
+        try {
+          imageUrl = await uploadAmenityImage(amenity.imageFile);
+        } catch (err) {
+          console.error("Amenity image upload failed:", err);
+          alert("Failed to upload amenity image.");
+          setSaving(false);
+          return;
+        }
+      }
+      amenitiesWithUrls.push({
+        title: amenity.title,
+        description: amenity.description,
+        imageUrl,
+      });
+    }
+
     const fd = new FormData();
     fd.append("title", form.title);
     fd.append("slug", form.slug);
@@ -138,7 +187,7 @@ export default function EditProjectModal({ id, onClose, onSave }) {
     fd.append("start_date", form.start_date);
     fd.append("end_date", form.end_date);
     fd.append("status", String(!!form.status));
-    fd.append("amenities", JSON.stringify(form.amenities));
+    fd.append("amenities", JSON.stringify(amenitiesWithUrls));
     fd.append("meta", JSON.stringify(form.meta));
     if (newHeroFile) {
       fd.append("hero_image", newHeroFile);
@@ -231,10 +280,8 @@ export default function EditProjectModal({ id, onClose, onSave }) {
               className="border rounded h-40"
             />
           </div>
-
-          {/* Amenities repeatable group */}
           <div>
-            <label className="block mb-1 font-bold mb-2">Amenities</label>
+            <label className="block mb-1 font-bold">Amenities</label>
             {form.amenities.map((amenity, idx) => (
               <div
                 key={idx}
@@ -248,24 +295,32 @@ export default function EditProjectModal({ id, onClose, onSave }) {
                   className="flex-grow border px-2 py-1 rounded"
                   required
                 />
-                <input
-                  type="text"
-                  placeholder="Description"
+                <SafeQuill
+                  theme="snow"
                   value={amenity.description}
-                  onChange={(e) =>
-                    updateAmenity(idx, "description", e.target.value)
-                  }
-                  className="flex-grow border px-2 py-1 rounded"
+                  onChange={(val) => updateAmenity(idx, "description", val)}
+                  className="flex-grow border rounded h-20"
                 />
-                <input
-                  type="text"
-                  placeholder="Image URL"
-                  value={amenity.imageUrl}
-                  onChange={(e) =>
-                    updateAmenity(idx, "imageUrl", e.target.value)
-                  }
-                  className="flex-grow border px-2 py-1 rounded"
-                />
+                <div className="flex flex-col items-center">
+                  <label className="cursor-pointer bg-gray-200 px-2 py-1 rounded text-sm">
+                    Choose Image
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) =>
+                        handleAmenityImageChange(idx, e.target.files[0])
+                      }
+                    />
+                  </label>
+                  {(amenity.imagePreview || amenity.imageUrl) && (
+                    <img
+                      src={amenity.imagePreview || amenity.imageUrl}
+                      alt="Amenity preview"
+                      className="h-16 w-16 object-cover rounded mt-1"
+                    />
+                  )}
+                </div>
                 <button
                   type="button"
                   className="bg-red-600 text-white p-1 rounded"
@@ -284,7 +339,6 @@ export default function EditProjectModal({ id, onClose, onSave }) {
               + Add Amenity
             </button>
           </div>
-
           <div>
             <label className="block mb-1">Hero Image</label>
             <input
@@ -300,7 +354,6 @@ export default function EditProjectModal({ id, onClose, onSave }) {
               />
             )}
           </div>
-
           <div>
             <label className="block mb-1">Add More Images</label>
             <input
@@ -310,7 +363,6 @@ export default function EditProjectModal({ id, onClose, onSave }) {
               onChange={(e) => setNewImages(Array.from(e.target.files))}
             />
           </div>
-
           <div>
             <label className="block mb-1">Add More Documents</label>
             <input
@@ -319,7 +371,6 @@ export default function EditProjectModal({ id, onClose, onSave }) {
               onChange={(e) => setNewDocuments(Array.from(e.target.files))}
             />
           </div>
-
           <div>
             <label className="block mb-1">Meta JSON</label>
             <textarea
@@ -329,7 +380,6 @@ export default function EditProjectModal({ id, onClose, onSave }) {
               className="w-full border px-3 py-2 rounded"
             />
           </div>
-
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -339,7 +389,6 @@ export default function EditProjectModal({ id, onClose, onSave }) {
             />
             <span>Active</span>
           </div>
-
           <div className="flex justify-end gap-3">
             <button
               type="button"
