@@ -20,13 +20,16 @@ const parseJSON = (raw, fallback) => {
 
 // List + filters + pagination
 export async function listProjects(req, res) {
+  console.info("listProjects called with", { query: req.query });
   try {
     const page = Math.max(1, Number(req.query?.page) || 1);
     const limit = Math.min(100, Math.max(1, Number(req.query?.limit) || 20));
     const title = (req.query?.title || "").toString().trim();
     const { rows, total } = await projectRepo.list({ page, limit, title });
+    console.info(`listProjects returning ${rows.length} rows`);
     return res.json({ data: { rows, total }, error: null });
   } catch (err) {
+    console.error("Error listing projects:", err);
     return res.status(500).json({
       data: null,
       error: { message: "Error listing projects", details: err.message },
@@ -36,15 +39,19 @@ export async function listProjects(req, res) {
 
 // Get by id
 export async function getProject(req, res) {
+  console.info("getProject called with id", req.params.id);
   try {
     const { id } = req.params;
     const data = await projectRepo.getById(id);
-    if (!data)
+    if (!data) {
+      console.warn("Project not found with id", id);
       return res
         .status(404)
         .json({ data: null, error: { message: "Project not found" } });
+    }
     return res.json({ data, error: null });
   } catch (err) {
+    console.error("Error fetching project:", err);
     return res.status(500).json({
       data: null,
       error: { message: "Error fetching project", details: err.message },
@@ -54,10 +61,10 @@ export async function getProject(req, res) {
 
 // Create
 export async function createProject(req, res) {
+  console.info("createProject called, body:", req.body);
   try {
     const b = req.body || {};
     const f = req.file; // multer.single("hero_image")
-
     const toInsert = {
       title: b.title,
       slug: b.slug,
@@ -71,7 +78,6 @@ export async function createProject(req, res) {
       images: parseJSON(b.images, []),
       documents: parseJSON(b.documents, []),
     };
-    // Optional hero image
     if (f) {
       const { url, error } = await uploadImageBuffer(
         BUCKET,
@@ -81,6 +87,7 @@ export async function createProject(req, res) {
         f.mimetype
       );
       if (error) {
+        console.error("Hero image upload failed:", error);
         return res.status(500).json({
           data: null,
           error: { message: "Hero image upload failed", details: error },
@@ -89,8 +96,10 @@ export async function createProject(req, res) {
       toInsert.hero_image = url;
     }
     const created = await projectRepo.insert(toInsert);
+    console.info("Project created with id", created.id);
     return res.status(201).json({ data: created, error: null });
   } catch (err) {
+    console.error("Create project error:", err);
     return res.status(400).json({
       data: null,
       error: { code: "VALIDATION_ERROR", message: err.message },
@@ -100,18 +109,18 @@ export async function createProject(req, res) {
 
 // Update
 export async function updateProject(req, res) {
+  console.info("updateProject called with id", req.params.id);
   try {
     const { id } = req.params;
     const b = req.body || {};
     const f = req.file;
     const existing = await projectRepo.getById(id);
     if (!existing) {
+      console.warn("Project not found for update, id", id);
       return res
         .status(404)
         .json({ data: null, error: { message: "Project not found" } });
     }
-
-    // handle amenities/images/documents
     const patch = {
       title: b.title ?? existing.title,
       slug: b.slug ?? existing.slug,
@@ -132,8 +141,6 @@ export async function updateProject(req, res) {
           ? parseJSON(b.documents, [])
           : existing.documents,
     };
-
-    // Optional hero image replace
     if (f) {
       const { url, error } = await uploadImageBuffer(
         BUCKET,
@@ -143,33 +150,34 @@ export async function updateProject(req, res) {
         f.mimetype
       );
       if (error) {
+        console.error("Hero image upload failed:", error);
         return res.status(500).json({
           data: null,
           error: { message: "Hero image upload failed", details: error },
         });
       }
-      // delete old hero image
       if (existing.hero_image) {
         await deleteFilesByUrls(BUCKET, [existing.hero_image]);
       }
       patch.hero_image = url;
     }
-
-    // Remove deleted images/documents
     const removedImages = existing.images.filter(
       (oldUrl) => !patch.images.includes(oldUrl)
     );
-    if (removedImages.length > 0)
+    if (removedImages.length > 0) {
       await deleteFilesByUrls(BUCKET, removedImages);
-
+    }
     const removedDocs = existing.documents.filter(
       (oldUrl) => !patch.documents.includes(oldUrl)
     );
-    if (removedDocs.length > 0) await deleteFilesByUrls(BUCKET, removedDocs);
-
+    if (removedDocs.length > 0) {
+      await deleteFilesByUrls(BUCKET, removedDocs);
+    }
     const updated = await projectRepo.update(id, patch);
+    console.info("Project updated, id:", id);
     return res.json({ data: updated, error: null });
   } catch (err) {
+    console.error("Update project error:", err);
     return res.status(400).json({
       data: null,
       error: { code: "VALIDATION_ERROR", message: err.message },
@@ -179,21 +187,33 @@ export async function updateProject(req, res) {
 
 // Idempotent status
 export async function updateProjectStatus(req, res) {
+  console.info("updateProjectStatus called with id", req.params.id);
   try {
     const active =
       req.body && "active" in req.body ? toBool(req.body.active) : null;
-    if (active === null)
+    if (active === null) {
+      console.warn("updateProjectStatus missing 'active' field");
       return res.status(400).json({
         data: null,
         error: { code: "BAD_REQUEST", message: "active required" },
       });
+    }
     const updated = await projectRepo.setStatus(req.params.id, active);
-    if (!updated)
+    if (!updated) {
+      console.warn("Project not found for status update, id", req.params.id);
       return res
         .status(404)
         .json({ data: null, error: { message: "Project not found" } });
+    }
+    console.info(
+      "Project status updated, id:",
+      req.params.id,
+      "active:",
+      active
+    );
     return res.json({ data: updated, error: null });
   } catch (err) {
+    console.error("Error updating status:", err);
     return res.status(500).json({
       data: null,
       error: { message: "Error updating status", details: err.message },
@@ -203,26 +223,31 @@ export async function updateProjectStatus(req, res) {
 
 // Delete project
 export async function deleteProject(req, res) {
+  console.info("deleteProject called with id", req.params.id);
   try {
     const { id } = req.params;
     const proj = await projectRepo.getById(id);
-    if (!proj)
+    if (!proj) {
+      console.warn("Project not found for deletion, id", id);
       return res
         .status(404)
         .json({ data: null, error: { message: "Project not found" } });
-
-    if (proj.hero_image) await deleteFilesByUrls(BUCKET, [proj.hero_image]);
+    }
+    if (proj.hero_image) {
+      await deleteFilesByUrls(BUCKET, [proj.hero_image]);
+    }
     const ok = await projectRepo.remove(id);
     if (!ok)
       return res
         .status(500)
         .json({ data: null, error: { message: "Failed to delete project" } });
-
+    console.info("Project deleted, id:", id);
     return res.json({
       data: { id, deleted_files: proj.hero_image ? 1 : 0 },
       error: null,
     });
   } catch (err) {
+    console.error("Error deleting project:", err);
     return res.status(500).json({
       data: null,
       error: { message: "Error deleting project", details: err.message },
@@ -232,6 +257,7 @@ export async function deleteProject(req, res) {
 
 // Upload hero image
 export async function uploadHeroImage(req, res) {
+  console.info("uploadHeroImage called");
   try {
     if (!req.file)
       return res
@@ -246,20 +272,25 @@ export async function uploadHeroImage(req, res) {
       file.mimetype
     );
     if (error) throw error;
+    console.info("Hero image uploaded, url:", url);
     return res.json({ data: { url }, error: null });
   } catch (err) {
-    return res.status(500).json({
-      data: null,
-      error: {
-        message: "Hero image upload failed",
-        details: err.message || err,
-      },
-    });
+    console.error("Hero image upload failed:", err);
+    return res
+      .status(500)
+      .json({
+        data: null,
+        error: {
+          message: "Hero image upload failed",
+          details: err.message || err,
+        },
+      });
   }
 }
 
 // Upload multiple images
 export async function uploadProjectImages(req, res) {
+  console.info("uploadProjectImages called");
   try {
     if (!req.files || req.files.length === 0)
       return res
@@ -277,20 +308,25 @@ export async function uploadProjectImages(req, res) {
       if (error) throw error;
       urls.push(url);
     }
+    console.info(`Uploaded ${urls.length} project images`);
     return res.json({ data: urls, error: null });
   } catch (err) {
-    return res.status(500).json({
-      data: null,
-      error: {
-        message: "Project images upload failed",
-        details: err.message || err,
-      },
-    });
+    console.error("Project images upload failed:", err);
+    return res
+      .status(500)
+      .json({
+        data: null,
+        error: {
+          message: "Project images upload failed",
+          details: err.message || err,
+        },
+      });
   }
 }
 
 // Upload documents
 export async function uploadProjectDocuments(req, res) {
+  console.info("uploadProjectDocuments called");
   try {
     if (!req.files || req.files.length === 0)
       return res
@@ -308,50 +344,57 @@ export async function uploadProjectDocuments(req, res) {
       if (error) throw error;
       urls.push(url);
     }
+    console.info(`Uploaded ${urls.length} project documents`);
     return res.json({ data: urls, error: null });
   } catch (err) {
-    return res.status(500).json({
-      data: null,
-      error: {
-        message: "Document upload failed",
-        details: err.message || err,
-      },
-    });
+    console.error("Document upload failed:", err);
+    return res
+      .status(500)
+      .json({
+        data: null,
+        error: {
+          message: "Document upload failed",
+          details: err.message || err,
+        },
+      });
   }
 }
 
 // Upload amenity image
 export async function uploadAmenityImage(req, res) {
+  console.info("uploadAmenityImage called");
   try {
     if (!req.file)
-      return res.status(400).json({
-        data: null,
-        error: { message: "No file uploaded" },
-      });
-
+      return res
+        .status(400)
+        .json({ data: null, error: { message: "No file uploaded" } });
     const file = req.file;
     const { url, error } = await uploadImageBuffer(
       BUCKET,
-      IMAGES_FOLDER, // Use distinct folder or name it as you wish
+      IMAGES_FOLDER,
       file.buffer,
       file.originalname,
       file.mimetype
     );
-
     if (error)
-      return res.status(500).json({
-        data: null,
-        error: { message: "Amenity image upload failed", details: error },
-      });
-
+      return res
+        .status(500)
+        .json({
+          data: null,
+          error: { message: "Amenity image upload failed", details: error },
+        });
+    console.info("Amenity image uploaded, url:", url);
     return res.json({ data: { url }, error: null });
   } catch (err) {
-    return res.status(500).json({
-      data: null,
-      error: {
-        message: "Amenity image upload error",
-        details: err.message || err,
-      },
-    });
+    console.error("Amenity image upload error:", err);
+    return res
+      .status(500)
+      .json({
+        data: null,
+        error: {
+          message: "Amenity image upload error",
+          details: err.message || err,
+        },
+      });
   }
 }
