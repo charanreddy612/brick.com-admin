@@ -10,7 +10,7 @@ const router = express.Router();
  * - offset (number)
  * - slug (string, optional for details, but prefer dedicated route)
  */
-router.get("/developers", async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const limit = Math.min(1000, Number(req.query.limit) || 20);
     const offset = Math.max(0, Number(req.query.offset) || 0);
@@ -35,7 +35,7 @@ router.get("/developers", async (req, res) => {
  * GET /api/public/developers/:slug
  * For individual developer details
  */
-router.get("/developers/:slug", async (req, res) => {
+router.get("/:slug", async (req, res) => {
   try {
     const { slug } = req.params;
     const developer = await developerRepo.getBySlug(slug);
