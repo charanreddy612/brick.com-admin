@@ -15,7 +15,7 @@ router.get("/home", async (req, res) => {
   try {
     // Fetch project list (featured / active only, limit 6)
     const { rows: projects, total } = await projectsService.listProjectsData({
-      status: "true",
+      status: true,
       limit: 6,
     });
 

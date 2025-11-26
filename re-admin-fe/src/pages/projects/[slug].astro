@@ -1,0 +1,107 @@
+---
+type Project = {
+  id: string;
+  slug: string;
+  title: string;
+  location: string;
+  priceFrom: number | null;
+  priceTo: number | null;
+  hero_image: string | null;
+  status: boolean | null;
+  description?: string;
+};
+
+type SeoMeta = {
+  title: string;
+  description: string;
+  canonical: string;
+  jsonLd: any;
+};
+
+const API_BASE = "https://brick-com-admin.onrender.com";
+
+const { slug } = Astro.params;
+
+let project: Project | null = null;
+let seoMeta: SeoMeta = {
+  title: "Project Details - Brick.com",
+  description: "",
+  canonical: "",
+  jsonLd: {},
+};
+
+try {
+  const response = await fetch(`${API_BASE}/api/public/projects/${slug}`);
+  if (!response.ok) throw new Error(`Failed to fetch project data. Status: ${response.status}`);
+  const json = await response.json();
+  project = json.data;
+
+  seoMeta = {
+    title: project?.title || "",
+    description: project?.description || `Details for ${project?.title}`,
+    canonical: `${import.meta.env.SITE}/projects/${slug}`,
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: project?.title,
+      description: project?.description,
+      image: project?.hero_image,
+      url: `${import.meta.env.SITE}/projects/${slug}`,
+    },
+  };
+} catch (e) {
+  console.error(`Error fetching project with slug ${slug}:`, e);
+}
+---
+
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <title>{seoMeta.title}</title>
+  <meta name="description" content={seoMeta.description} />
+  <link rel="canonical" href={seoMeta.canonical} />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="/global.css" rel="stylesheet" />
+  <script type="application/ld+json" is:inline>
+    {JSON.stringify(seoMeta.jsonLd)}
+  </script>
+</head>
+<body class="bg-white text-gray-900 font-sans leading-relaxed max-w-7xl mx-auto px-6 sm:px-10 py-12">
+  {project ? (
+    <>
+      <article>
+        <h1 class="text-4xl font-extrabold mb-6">{project.title}</h1>
+        {project.hero_image ? (
+          <img src={project.hero_image} alt={`Image of ${project.title}`} class="w-full max-h-96 object-cover rounded mb-6" />
+        ) : (
+          <div class="bg-gray-200 w-full h-64 flex items-center justify-center text-gray-400 mb-6">No image available</div>
+        )}
+        <p class="text-lg text-gray-700 mb-4">{project.description || "No description available."}</p>
+        <div class="mb-4 text-sm text-gray-600">
+          <p><strong>Location:</strong> {project.location}</p>
+          <p>
+            <strong>Price Range:</strong>{" "}
+            {project.priceFrom && project.priceTo
+              ? `₹${project.priceFrom.toLocaleString()} - ₹${project.priceTo.toLocaleString()}`
+              : "Price on request"}
+          </p>
+          <p>
+            <strong>Status:</strong>{" "}
+            <span class={project.status ? "text-green-600 font-semibold" : "text-gray-500"}>
+              {project.status ? "Active" : "Inactive"}
+            </span>
+          </p>
+        </div>
+      </article>
+    </>
+  ) : (
+    <section class="text-center py-20">
+      <h2 class="text-2xl font-bold text-gray-700 mb-4">Project not found</h2>
+      <p class="text-gray-600">Sorry, we couldn't find the project you are looking for.</p>
+      <a href="/projects" class="inline-block mt-6 px-5 py-3 bg-emerald-600 text-white rounded hover:bg-emerald-700 transition">
+        Back to Projects
+      </a>
+    </section>
+  )}
+</body>
+</html>

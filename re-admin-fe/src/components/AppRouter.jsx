@@ -9,10 +9,6 @@ import DashboardSummary from "./DashboardSummary.jsx";
 // Real Estate Modules
 import DevelopersListPage from "./DevelopersListPage.jsx";
 import ProjectsListPage from "./ProjectsListPage.jsx";
-// import AgentsListPage from "./AgentsListPage.jsx";
-// import LocationsListPage from "./LocationsListPage.jsx";
-// import InquiriesListPage from "./InquiriesListPage.jsx";
-// import PropertyCategoriesPage from "./PropertyCategoriesPage.jsx";
 
 export default function AppRouter() {
   const [isClient, setIsClient] = useState(false);
@@ -27,12 +23,12 @@ export default function AppRouter() {
   if (!isClient) return null;
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/admin">
       <Routes>
-        {/* Public */}
+        {/* Public admin route */}
         <Route path="/login" element={<LoginForm />} />
 
-        {/* Protected Dashboard */}
+        {/* Protected admin dashboard */}
         <Route
           path="/dashboard/*"
           element={
@@ -48,13 +44,9 @@ export default function AppRouter() {
           {/* Real Estate Routes */}
           <Route path="developers" element={<DevelopersListPage />} />
           <Route path="projects" element={<ProjectsListPage />} />
-          {/* <Route path="agents" element={<AgentsListPage />} />
-          <Route path="locations" element={<LocationsListPage />} />
-          <Route path="inquiries" element={<InquiriesListPage />} />
-          <Route path="property-categories" element={<PropertyCategoriesPage />} /> */}
         </Route>
 
-        {/* Root redirect */}
+        {/* Admin root redirect */}
         <Route
           path="/"
           element={
@@ -66,7 +58,7 @@ export default function AppRouter() {
           }
         />
 
-        {/* 404 fallback */}
+        {/* 404 inside admin app */}
         <Route path="*" element={<p>404 Not Found</p>} />
       </Routes>
     </BrowserRouter>
