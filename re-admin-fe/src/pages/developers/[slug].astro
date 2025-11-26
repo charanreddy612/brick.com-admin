@@ -1,8 +1,6 @@
 ---
 const API_BASE = "https://brick-com-admin.onrender.com";
 
-const { slug } = Astro.params;
-
 export async function getStaticPaths() {
   try {
     const res = await fetch(`${API_BASE}/api/public/developers?limit=1000`);
@@ -22,6 +20,8 @@ export async function getStaticPaths() {
     return { paths: [], fallback: false };
   }
 }
+
+const { slug } = Astro.params;
 
 let developer = null;
 try {
