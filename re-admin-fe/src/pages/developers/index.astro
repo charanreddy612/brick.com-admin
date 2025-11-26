@@ -1,0 +1,42 @@
+---
+const API_BASE = "https://brick-com-admin.onrender.com";
+
+let developers = [];
+try {
+  const res = await fetch(
+    `${API_BASE}/api/public/developers?limit=20&offset=0`
+  );
+  if (res.ok) {
+    const json = await res.json();
+    developers = json.data?.rows || [];
+  }
+} catch (e) {
+  console.error("Failed to load developers:", e);
+}
+---
+
+<html lang="en">
+  <head>
+    <title>Developers | Brick.com</title>
+    <meta
+      name="description"
+      content="Meet the top real estate developers on Brick.com"
+    />
+  </head>
+  <body>
+    <h1 class="text-3xl font-bold mb-4">Our Developers</h1>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {
+        developers.map((dev: { slug: any; name: string; company: string; }) => (
+          <a
+            href={`/developers/${dev.slug}`}
+            class="block p-4 border rounded hover:shadow transition"
+          >
+            <h2 class="text-xl font-semibold">{dev.name}</h2>
+            <p class="text-gray-600">{dev.company}</p>
+          </a>
+        ))
+      }
+    </div>
+  </body>
+</html>

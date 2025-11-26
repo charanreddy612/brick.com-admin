@@ -256,3 +256,23 @@ export async function linkCities(developer_id, cities = []) {
 async function deleteCities(devId) {
   return db("developer_cities").where({ developer_id: devId }).del();
 }
+
+// export async function list({ limit = 20, offset = 0 } = {}) {
+//   const { data, error } = await supabase
+//     .from("developers")
+//     .select("*")
+//     .limit(limit)
+//     .offset(offset);
+//   if (error) throw error;
+//   return { data, error: null };
+// }
+
+export async function getBySlug(slug) {
+  const { data, error } = await supabase
+    .from("developers")
+    .select("*")
+    .eq("slug", slug)
+    .single();
+  if (error) return null;
+  return data;
+}

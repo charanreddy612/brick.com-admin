@@ -1,4 +1,3 @@
-// routes/publicProjectsRoutes.js
 import express from "express";
 import * as projectController from "../controllers/projectController.js";
 import * as dashboardController from "../controllers/dashboardController.js";
@@ -57,6 +56,75 @@ router.get("/home", async (req, res) => {
       data: null,
       error: { message: "Failed to load home page data", details: err.message },
     });
+  }
+});
+
+/**
+ * GET /api/public/projects
+ * Query params:
+ * - status (optional boolean string): filter active projects
+ * - limit (optional number): max number of records to return
+ * - fields (optional comma separated string): requested fields to return (e.g. slug)
+ * Returns filtered projects list with only requested fields
+ */
+router.get("/projects", async (req, res) => {
+  try {
+    const status =
+      req.query.status === "true"
+        ? true
+        : req.query.status === "false"
+        ? false
+        : undefined;
+    const limit = Math.min(1000, Number(req.query.limit) || 20);
+    const fields = req.query.fields ? req.query.fields.split(",") : null;
+
+    // Fetch projects with filters from service
+    const { rows } = await projectsService.listProjectsData({
+      status,
+      limit,
+    });
+
+    // Filter fields if requested
+    let data = rows;
+    if (fields && fields.length > 0) {
+      data = rows.map((project) => {
+        const filtered = {};
+        fields.forEach((field) => {
+          if (project.hasOwnProperty(field)) filtered[field] = project[field];
+        });
+        return filtered;
+      });
+    }
+
+    return res.json({
+      data: { rows: data },
+      error: null,
+    });
+  } catch (err) {
+    console.error("Error fetching projects:", err);
+    return res.status(500).json({
+      data: null,
+      error: { message: "Failed to fetch projects", details: err.message },
+    });
+  }
+});
+
+// GET /api/public/projects/:slug
+router.get("/projects/:slug", async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const project = await projectRepo.getBySlug(slug);
+    if (!project) {
+      return res
+        .status(404)
+        .json({ data: null, error: { message: "Project not found" } });
+    }
+    return res.json({ data: project, error: null });
+  } catch (err) {
+    console.error("Error fetching project details:", err);
+    return res
+      .status(500)
+      .json({ data: null, error: { message: err.message } });
   }
 });
 

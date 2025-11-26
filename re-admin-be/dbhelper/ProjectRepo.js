@@ -186,3 +186,18 @@ export async function count() {
   if (error) throw error;
   return count ?? 0;
 }
+
+// dbhelper/ProjectRepo.js
+
+export async function getBySlug(slug) {
+  const { data, error } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("slug", slug)
+    .single();
+  if (error) {
+    console.error("Error fetching project by slug:", error);
+    return null;
+  }
+  return data;
+}

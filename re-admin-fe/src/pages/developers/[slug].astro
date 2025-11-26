@@ -1,0 +1,50 @@
+---
+const { slug } = Astro.params;
+const API_BASE = "https://brick-com-admin.onrender.com";
+
+let developer = null;
+try {
+  const res = await fetch(`${API_BASE}/api/public/developers/${slug}`);
+  if (res.ok) {
+    const json = await res.json();
+    developer = json.data;
+  }
+} catch (e) {
+  console.error("Failed to load developer:", e);
+}
+---
+
+<html lang="en">
+  <head>
+    <title>
+      {developer ? developer.name : "Developer Not Found"} | Brick.com
+    </title>
+    <meta name="description" content={developer?.bio || "Developer profile"} />
+  </head>
+  <body>
+    {
+      developer ? (
+        <div class="max-w-4xl mx-auto p-4">
+          <h1 class="text-3xl font-bold mb-4">{developer.name}</h1>
+          <p class="mb-2">
+            <strong>Company:</strong> {developer.company}
+          </p>
+          <p class="mb-2">
+            <strong>Bio:</strong> {developer.bio}
+          </p>
+          {/* Add other details as needed */}
+        </div>
+      ) : (
+        <div class="text-center py-20">
+          <h2 class="text-2xl font-semibold mb-4">Developer not found</h2>
+          <a
+            href="/developers"
+            class="inline-block px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700"
+          >
+            Back to Developers
+          </a>
+        </div>
+      )
+    }
+  </body>
+</html>

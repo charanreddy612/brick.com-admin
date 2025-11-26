@@ -19,6 +19,28 @@ type SeoMeta = {
 };
 
 const API_BASE = "https://brick-com-admin.onrender.com";
+export async function getStaticPaths() {
+  try {
+    const res = await fetch(`${API_BASE}/api/public/projects?status=true&limit=1000&fields=slug`);
+    if (!res.ok) throw new Error(`Failed to fetch project slugs for static paths`);
+
+    const json = await res.json();
+    const projects: { slug: string }[] = json.data.rows || [];
+
+    return {
+      paths: projects.map((project: { slug: string }) => ({
+        params: { slug: project.slug },
+      })),
+      fallback: false, // or 'blocking' depending on your preference
+    };
+  } catch (e) {
+    console.error("Error fetching static paths for projects:", e);
+    return {
+      paths: [],
+      fallback: false,
+    };
+  }
+}
 
 const { slug } = Astro.params;
 
