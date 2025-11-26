@@ -2,21 +2,14 @@
 import * as projectRepo from "../dbhelper/ProjectRepo.js";
 import * as developerRepo from "../dbhelper/DeveloperRepo.js";
 import * as blogRepo from "../dbhelper/BlogRepo.js";
+import * as dashboardSerice from "../services/dashboardService.js";
 
 export async function getSummary(req, res) {
   try {
-    const [projects, developers, blogs] = await Promise.all([
-      projectRepo.count(), // total projects
-      developerRepo.count(), // total developers
-      blogRepo.countPublished(), // published blogs remain
-    ]);
+    const data = await dashboardSerice.getDashboardSummary();
 
     return res.json({
-      data: {
-        totalProjects: projects,
-        totalDevelopers: developers,
-        publishedBlogs: blogs,
-      },
+      data,
       error: null,
     });
   } catch (err) {

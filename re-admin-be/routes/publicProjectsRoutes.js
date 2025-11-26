@@ -3,6 +3,7 @@ import express from "express";
 import * as projectController from "../controllers/projectController.js";
 import * as dashboardController from "../controllers/dashboardController.js";
 import * as projectsService from "../services/projectsService.js";
+import * as dashboardService from "../services/dashboardService.js";
 
 const router = express.Router();
 
@@ -19,7 +20,7 @@ router.get("/home", async (req, res) => {
     });
 
     // Fetch aggregate stats from dashboard summary (totalProjects, totalDevelopers, totalActiveProjects)
-    const summary = await dashboardController.getSummary();
+    const summary = await dashboardService.getDashboardSummary();
 
     // Shape featured projects for public client
     const featuredProjects = projects.map((p) => ({
