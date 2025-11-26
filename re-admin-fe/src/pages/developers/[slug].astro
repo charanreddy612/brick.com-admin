@@ -1,8 +1,10 @@
 ---
 const { slug } = Astro.params;
+
 const API_BASE = "https://brick-com-admin.onrender.com";
 
 export async function getStaticPaths() {
+  const API_BASE = "https://brick-com-admin.onrender.com";
 
   try {
     const res = await fetch(`${API_BASE}/api/public/developers?limit=1000`);
@@ -12,10 +14,10 @@ export async function getStaticPaths() {
     const developers = json.data.rows || [];
 
     return {
-      paths: developers.map((dev: { slug: string }) => ({
+      paths: developers.map((dev: { slug: string; }) => ({
         params: { slug: dev.slug },
       })),
-      fallback: false, // or 'blocking' if you want on-demand rendering
+      fallback: false, // or 'blocking' as needed
     };
   } catch (e) {
     console.error("Error fetching static paths for developers:", e);
