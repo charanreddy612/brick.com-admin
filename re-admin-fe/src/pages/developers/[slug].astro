@@ -1,8 +1,6 @@
 ---
 const API_BASE = "https://brick-com-admin.onrender.com";
 
-console.log("API_BASE:", API_BASE)
-
 type Developer = {
   slug: string;
   // add other expected fields if needed
@@ -21,9 +19,7 @@ export async function getStaticPaths() {
       .map((dev: Developer) => ({ params: { slug: dev.slug } }));
 
     if (paths.length === 0) {
-      console.warn(
-        "No valid developer slugs found, building with fallback slug."
-      );
+      console.warn("No valid developer slugs found, using fallback slug.");
       return {
         paths: [{ params: { slug: "fallback-slug" } }],
         fallback: false,
@@ -57,3 +53,22 @@ try {
   console.error("Failed to load developer data:", e);
 }
 ---
+
+<html>
+  <head>
+    <title>{developer ? developer.name : "Developer Not Found"}</title>
+  </head>
+  <body>
+    {
+      developer ? (
+        <>
+          <h1>{developer.name}</h1>
+          <p>{developer.description}</p>
+          {/* Add more developer details here */}
+        </>
+      ) : (
+        <p>Developer data not available.</p>
+      )
+    }
+  </body>
+</html>
