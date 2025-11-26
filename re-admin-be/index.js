@@ -12,6 +12,7 @@ import projectRoutes from "./routes/projectRoutes.js";
 
 // Import new public projects routes
 import publicProjectsRoutes from "./routes/publicProjectsRoutes.js";
+import publicDevelopersRoutes from "./routes/publicDevelopersRoutes.js";
 
 dotenv.config();
 
@@ -50,6 +51,7 @@ app.use("/api/projects", authenticateToken, projectRoutes);
 
 // Mount new public projects routes
 app.use("/api/public/projects", publicProjectsRoutes);
+app.use("/api/public/developers", publicDevelopersRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to Brick.com Admin Backend" });
