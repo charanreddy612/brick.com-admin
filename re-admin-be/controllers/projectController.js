@@ -1,6 +1,7 @@
 import * as projectRepo from "../dbhelper/ProjectRepo.js";
 import { uploadImageBuffer } from "../services/storageService.js";
 import { deleteFilesByUrls } from "../services/deleteFilesByUrl.js";
+import * as projectsService from "../services/projectsService.js";
 
 const BUCKET = process.env.UPLOAD_BUCKET || "project-files";
 const HERO_FOLDER = "hero-images";
@@ -25,7 +26,13 @@ export async function listProjects(req, res) {
     const page = Math.max(1, Number(req.query?.page) || 1);
     const limit = Math.min(100, Math.max(1, Number(req.query?.limit) || 20));
     const title = (req.query?.title || "").toString().trim();
-    const { rows, total } = await projectRepo.list({ page, limit, title });
+    const status = (req.query?.stats || "").toString().trim();
+    const { rows, total } = await projectsService.listProjectsData({
+      title,
+      page: Number(page),
+      limit: Number(limit),
+      status,
+    });
     console.info(`listProjects returning ${rows.length} rows`);
     return res.json({ data: { rows, total }, error: null });
   } catch (err) {

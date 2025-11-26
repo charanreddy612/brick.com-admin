@@ -2,6 +2,7 @@
 import express from "express";
 import * as projectController from "../controllers/projectController.js";
 import * as dashboardController from "../controllers/dashboardController.js";
+import * as projectsService from "../services/projectsService.js";
 
 const router = express.Router();
 
@@ -12,8 +13,9 @@ const router = express.Router();
 router.get("/home", async (req, res) => {
   try {
     // Fetch project list (featured / active only, limit 6)
-    const { rows: projects, total } = await projectController.listProjects({
-      query: { status: "true", limit: 6 },
+    const { rows: projects, total } = await projectsService.listProjectsData({
+      status: "true",
+      limit: 6,
     });
 
     // Fetch aggregate stats from dashboard summary (totalProjects, totalDevelopers, totalActiveProjects)
