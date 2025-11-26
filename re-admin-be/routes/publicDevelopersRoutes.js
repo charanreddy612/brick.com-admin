@@ -3,50 +3,48 @@ import * as developerRepo from "../dbhelper/DeveloperRepo.js";
 
 const router = express.Router();
 
-/**
- * GET /api/public/developers
- * Query Params:
- * - limit (number)
- * - offset (number)
- * - slug (string, optional for details, but prefer dedicated route)
- */
+// Root GET route for public developers list
 router.get("/", async (req, res) => {
   try {
-    const limit = Math.min(1000, Number(req.query.limit) || 20);
-    const offset = Math.max(0, Number(req.query.offset) || 0);
+    // Using query params if needed (name, city, page, limit)
+    const { name = "", city = "", page = 1, limit = 1000 } = req.query;
 
-    // Fetch list of developers
-    const { data: developers, error } = await developerRepo.list({
-      limit,
-      offset,
+    // Call repo list method properly converting string query to numbers
+    const { rows, total } = await developerRepo.list({
+      name,
+      city,
+      page: Number(page),
+      limit: Number(limit),
     });
-    if (error) throw error;
 
-    return res.json({ data: { rows: developers }, error: null });
+    // Return response with correct shape for front-end consumption
+    return res.json({
+      data: { rows, total },
+      error: null,
+    });
   } catch (err) {
-    console.error("Failed to fetch developers:", err);
-    return res
-      .status(500)
-      .json({ data: null, error: { message: err.message } });
+    console.error("Error in /api/public/developers:", err);
+    return res.status(500).json({
+      data: null,
+      error: { message: "Failed to fetch developers" },
+    });
   }
 });
 
-/**
- * GET /api/public/developers/:slug
- * For individual developer details
- */
+// GET route for individual developer by slug
 router.get("/:slug", async (req, res) => {
   try {
     const { slug } = req.params;
     const developer = await developerRepo.getBySlug(slug);
     if (!developer) {
-      return res
-        .status(404)
-        .json({ data: null, error: { message: "Developer not found" } });
+      return res.status(404).json({
+        data: null,
+        error: { message: "Developer not found" },
+      });
     }
     return res.json({ data: developer, error: null });
   } catch (err) {
-    console.error("Error fetching developer details:", err);
+    console.error("Error fetching developer by slug:", err);
     return res
       .status(500)
       .json({ data: null, error: { message: err.message } });

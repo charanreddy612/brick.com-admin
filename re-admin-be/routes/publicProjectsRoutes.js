@@ -67,7 +67,7 @@ router.get("/home", async (req, res) => {
  * - fields (optional comma separated string): requested fields to return (e.g. slug)
  * Returns filtered projects list with only requested fields
  */
-router.get("/projects", async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const status =
       req.query.status === "true"
@@ -110,7 +110,7 @@ router.get("/projects", async (req, res) => {
 });
 
 // GET /api/public/projects/:slug
-router.get("/projects/:slug", async (req, res) => {
+router.get("/:slug", async (req, res) => {
   try {
     const { slug } = req.params;
     const project = await projectRepo.getBySlug(slug);
