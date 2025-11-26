@@ -1,7 +1,6 @@
 // middleware/authMiddleware.js
 import jwt from "jsonwebtoken";
 
-console.log("JWT_SECRET in authMiddleware:", process.env.JWT_SECRET);
 const JWT_SECRET = process.env.JWT_SECRET;
 
 if (!JWT_SECRET) {
