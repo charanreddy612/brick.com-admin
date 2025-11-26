@@ -1,68 +1,78 @@
+// controllers/authController.js
 import jwt from "jsonwebtoken";
-import { supabase } from "../dbhelper/dbclient.js";
 import bcrypt from "bcrypt";
-import { config } from "../config/config.js";
+import { getAdminUserByEmail } from "../dbhelper/AdminRepo.js";
+
+const JWT_SECRET = process.env.JWT_SECRET;
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
+const ACCESS_TOKEN_EXPIRY = "15m";
+const REFRESH_TOKEN_EXPIRY = "7d";
 
 export async function login(req, res) {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ message: "Email and password required" });
-  }
-console.log('Login request:', req.body);
   try {
-    // Fetch user by user_id
-    const { data, error } = await supabase
-      .from("users")
-      .select("id, email, password_hash, role_id")
-      .eq("email", email)
-      .single();
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ message: "email and password required" });
+    }
 
-    console.log('Supabase response:', data, error);
-
-    if (error) throw error;
-
-    if (!data) {
+    const user = await getAdminUserByEmail(email);
+    if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Check if password hash exists
-    if (!data.password_hash) {
-      return res.status(500).json({ message: "Password not set for user" });
-    }
-    
-    const isMatch = await bcrypt.compare(password, data.password_hash);
-    console.log("bcrypt.compare result:", isMatch);
-    
-    if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
+    const passwordMatch = await bcrypt.compare(password, user.password_hash);
+    if (!passwordMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Generate JWT token
-    const token = jwt.sign(
-      {
-        id: data.id,
-        email: data.email,
-        role_id: data.role_id, // 🔹 Important
-      },
-      config.jwtSecret,
-      { expiresIn: "1h" }
-    );
+    const payload = {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    };
 
-    res.json({
-      token,
-      user: {
-        id: data.id,
-        email: data.email,
-        role_id: data.role_id,
-      },
+    const accessToken = jwt.sign(payload, JWT_SECRET, {
+      expiresIn: ACCESS_TOKEN_EXPIRY,
     });
+    const refreshToken = jwt.sign(payload, REFRESH_TOKEN_SECRET, {
+      expiresIn: REFRESH_TOKEN_EXPIRY,
+    });
+
+    // TODO: Store refreshToken in DB or cache for revocation support
+
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 15 * 60 * 1000,
+      path: "/",
+    });
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: "/",
+    });
+
+    return res.json({ message: "Login successful" });
   } catch (err) {
     console.error("Login error:", err);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Internal server error" });
   }
 }
 
-export const profile = (req, res) => {
-  res.json({ message: "Protected profile route", user: req.user });
-};
+export function logout(req, res) {
+  // TODO: Invalidate refresh token in DB if stored
+
+  res.clearCookie("accessToken", { path: "/" });
+  res.clearCookie("refreshToken", { path: "/" });
+  res.json({ message: "Logged out successfully" });
+}
+
+export function profile(req, res) {
+  if (!req.user) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  res.json({ user: req.user });
+}

@@ -1,25 +1,28 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { API_BASE_URL } from "../config/api.js";
-// import pkg from 'react-router-dom';
-// const {useNavigate} = pkg;
 
 export default function LoginForm() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const from = location.state?.from?.pathname || "/dashboard";
 
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: username, password }),
-        credentials: "include",
+        body: JSON.stringify({ email, password }),
+        credentials: "include", // Important to send/receive cookies
       });
 
       const jsonResponse = await res.json();
@@ -28,14 +31,14 @@ export default function LoginForm() {
         throw new Error(jsonResponse.message || "Login failed");
       }
 
-      localStorage.setItem("authToken", jsonResponse.token);
-      localStorage.setItem("username", jsonResponse.user.email);
-      localStorage.setItem("userid", jsonResponse.user.id);
-      localStorage.setItem("role_id", jsonResponse.user.role_id);
+      // NOTE: Do NOT store tokens in localStorage when using secure cookies
+      // You can optionally store user info here from response if needed, like:
+      // localStorage.setItem("username", jsonResponse.user.email);
+      // Or better, fetch user state from backend on app load
 
-      // Fetch sidebar menus using role_id
+      // Fetch sidebar menus using backend to avoid storing auth token manually
       const sidebarRes = await fetch(`${API_BASE_URL}/api/sidebar`, {
-        headers: { Authorization: `Bearer ${jsonResponse.token}` },
+        credentials: "include", // Include cookies for auth
       });
 
       if (!sidebarRes.ok) throw new Error("Failed to fetch sidebar");
@@ -44,10 +47,10 @@ export default function LoginForm() {
 
       setLoading(false);
 
-      // Use React Router navigation instead of window.location.href
-      navigate("/dashboard", { replace: true });
+      // Redirect to originally requested page or dashboard
+      navigate(from, { replace: true });
     } catch (err) {
-      alert(err.message);
+      setError(err.message);
       setLoading(false);
     }
   }
@@ -63,18 +66,18 @@ export default function LoginForm() {
         >
           <div>
             <label
-              htmlFor="username"
+              htmlFor="email"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Username
+              Email
             </label>
             <input
-              id="username"
-              type="text"
+              id="email"
+              type="email"
               required
-              autoComplete="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
               className="w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
@@ -98,6 +101,12 @@ export default function LoginForm() {
               className="w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
           </div>
+
+          {error && (
+            <p className="text-red-600 text-sm mb-2" role="alert">
+              {error}
+            </p>
+          )}
 
           <button
             type="submit"

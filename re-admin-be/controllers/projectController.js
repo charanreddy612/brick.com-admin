@@ -390,3 +390,23 @@ export async function uploadAmenityImage(req, res) {
     });
   }
 }
+
+// In controllers/projectController.js
+
+export function generateHomeSeoMeta({ heroStats, featuredProjects }) {
+  return {
+    title: `Brick.com – ${heroStats.totalProjects} Premium Real Estate Projects`,
+    description:
+      `Explore ${heroStats.totalProjects} real estate projects and developments on Brick.com. ` +
+      `Trusted by ${heroStats.totalDevelopers} developers, find your ideal property today.`,
+    canonical: "https://brick.com/",
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "RealEstateAgent",
+      name: "Brick.com",
+      url: "https://brick.com/",
+      numberOfProperties: heroStats.totalProjects,
+      developerCount: heroStats.totalDevelopers,
+    },
+  };
+}
