@@ -30,6 +30,14 @@ export default function LoginForm() {
         throw new Error(jsonResponse.message || "Login failed");
       }
 
+      // After login success, test profile:
+      const profileRes = await fetch(`${API_BASE_URL}/api/auth/profile`, {
+        headers: {
+          Authorization: `Bearer ${jsonResponse.accessToken}`,
+        },
+      });
+      console.log("Profile test:", await profileRes.json());
+      
       // ✅ STORE TOKEN IN LOCALSTORAGE
       localStorage.setItem("accessToken", jsonResponse.accessToken);
       localStorage.setItem("username", jsonResponse.user?.email);
@@ -37,11 +45,7 @@ export default function LoginForm() {
       localStorage.setItem("role_id", jsonResponse.user?.role_id);
 
       // ✅ FETCH SIDEBAR WITH AUTH HEADER
-      const sidebarRes = await fetch(`${API_BASE_URL}/api/sidebar`, {
-        headers: {
-          Authorization: `Bearer ${jsonResponse.accessToken}`,
-        },
-      });
+      const sidebarRes = await apiFetch(`${API_BASE_URL}/api/sidebar`);
 
       if (!sidebarRes.ok) throw new Error("Failed to fetch sidebar");
       const menus = await sidebarRes.json();

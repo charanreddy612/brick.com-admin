@@ -9,9 +9,7 @@ export default function ProtectedRoute({ children }) {
   useEffect(() => {
     async function checkAuth() {
       try {
-        const res = await fetch("/api/auth/profile", {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        });
+        const res = await apiFetch(`${API_BASE_URL}/api/auth/profile`);
 
         if (!res.ok) {
           setIsAuthenticated(false);
