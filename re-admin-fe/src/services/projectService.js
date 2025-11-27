@@ -11,7 +11,6 @@ export async function listProjects({ title = "", page = 1, limit = 20 } = {}) {
     params.set("limit", String(limit));
 
     const queryString = params.toString();
-    console.log("QUERY STRING:", queryString);  // Should be: "page=1&limit=20"
 
     const res = await apiFetch(
       `${API_BASE_URL}/api/projects?${queryString}`

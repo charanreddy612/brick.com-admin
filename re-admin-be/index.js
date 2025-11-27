@@ -35,15 +35,7 @@ app.use(
 
 app.options("/api/auth/login", cors());
 
-// ✅ 3. FORM DATA ROUTES LAST - Multer handles FormData
-app.use("/api/developers", authenticateToken, developerRoutes);
-app.use("/api/projects", authenticateToken, projectRoutes);
-
-// // ✅ 1. BODY PARSER FIRST - Parses JSON for auth/dashboard/sidebar
-// app.use(express.json({ limit: process.env.JSON_LIMIT || "1mb" }));
-// app.use(express.urlencoded({ extended: true }));
-
-// Skip body-parser for multipart, parse JSON for others
+// ✅ CRITICAL: Smart body-parser FIRST - skips multipart for multer
 app.use((req, res, next) => {
   if (req.headers["content-type"]?.includes("multipart/form-data")) {
     return next(); // Let multer handle FormData
@@ -52,10 +44,14 @@ app.use((req, res, next) => {
 });
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ 2. JSON ROUTES - Need body-parser
+// ✅ 1. JSON ROUTES FIRST - Need body-parser (login, dashboard, etc.)
 app.use("/api/auth", authRoutes);
 app.use("/api/sidebar", authenticateToken, sidebarRoutes);
 app.use("/api/dashboard", authenticateToken, dashboardRoutes);
+
+// ✅ 2. FORM DATA ROUTES LAST - Multer handles FormData
+app.use("/api/developers", authenticateToken, developerRoutes);
+app.use("/api/projects", authenticateToken, projectRoutes);
 
 // ✅ Static files
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
