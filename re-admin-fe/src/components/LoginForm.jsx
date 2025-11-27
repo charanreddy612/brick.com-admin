@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { API_BASE_URL } from "../config/api.js";
+import { apiFetch } from "../utils/api.js";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
@@ -31,13 +32,9 @@ export default function LoginForm() {
       }
 
       // After login success, test profile:
-      const profileRes = await fetch(`${API_BASE_URL}/api/auth/profile`, {
-        headers: {
-          Authorization: `Bearer ${jsonResponse.accessToken}`,
-        },
-      });
+      const profileRes = await apiFetch(`${API_BASE_URL}/api/auth/profile`);
       console.log("Profile test:", await profileRes.json());
-      
+
       // ✅ STORE TOKEN IN LOCALSTORAGE
       localStorage.setItem("accessToken", jsonResponse.accessToken);
       localStorage.setItem("username", jsonResponse.user?.email);
