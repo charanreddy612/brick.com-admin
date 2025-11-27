@@ -35,8 +35,8 @@ app.use(
 app.options("/api/auth/login", cors());
 
 // ✅ FORM DATA ROUTES - Multer inside routes handles parsing
-app.use("/api/developers", authenticateToken, developerRoutes);
-app.use("/api/projects", authenticateToken, projectRoutes);
+app.use("/api/developers", developerRoutes);
+app.use("/api/projects", projectRoutes);
 
 // ✅ BODY PARSER ONLY FOR JSON ROUTES
 app.use(express.json({ limit: process.env.JSON_LIMIT || "1mb" }));
