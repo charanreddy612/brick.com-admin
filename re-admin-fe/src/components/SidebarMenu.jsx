@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import * as FiIcons from "react-icons/fi";
 import { Link, useLocation } from "react-router-dom";
 import { API_BASE_URL } from "../config/api.js";
+import { apiFetch } from "../utils/api.js";
 
 export default function SidebarMenu({ isCollapsed }) {
   const [menuItems, setMenuItems] = useState([]);
@@ -11,20 +12,12 @@ export default function SidebarMenu({ isCollapsed }) {
   useEffect(() => {
     async function fetchMenus() {
       try {
-        const sidebarRes = await fetch(`${API_BASE_URL}/api/sidebar`, {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        });
+        const sidebarRes = await apiFetch(`${API_BASE_URL}/api/sidebar`);
 
         if (!sidebarRes.ok) throw new Error("Failed to fetch sidebar");
         const menus = await sidebarRes.json();
         setMenuItems(menus);
         localStorage.setItem("sidebarMenus", JSON.stringify(menus));
-
-        // const token = localStorage.getItem("authToken");
-        // const res = await fetch(`${API_BASE_URL}/api/sidebar`, {
-        //   headers: { Authorization: `Bearer ${token}` },
-        // });
-        // if (!res.ok) throw new Error("Failed to fetch sidebar menus");
       } catch (err) {
         console.error("Sidebar menu fetch failed:", err);
         // fallback to cached data
