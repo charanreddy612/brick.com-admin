@@ -10,7 +10,7 @@ export default function LogoutButton() {
     try {
       const res = await fetch("/api/auth/logout", {
         method: "POST",
-        credentials: "include", // Important for cookie-based auth
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
       });
 
       if (!res.ok) throw new Error("Logout failed");

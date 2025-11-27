@@ -10,7 +10,7 @@ export default function ProtectedRoute({ children }) {
     async function checkAuth() {
       try {
         const res = await fetch("/api/auth/profile", {
-          credentials: "include", // send cookies
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         });
 
         if (!res.ok) {

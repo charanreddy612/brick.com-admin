@@ -11,8 +11,8 @@ export default function SidebarMenu({ isCollapsed }) {
   useEffect(() => {
     async function fetchMenus() {
       try {
-        const sidebarRes = await fetch(`/api/sidebar`, {
-          credentials: "include", // Include cookies for auth
+        const sidebarRes = await fetch(`${API_BASE_URL}/api/sidebar`, {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         });
 
         if (!sidebarRes.ok) throw new Error("Failed to fetch sidebar");

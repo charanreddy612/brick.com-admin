@@ -22,7 +22,6 @@ export default function LoginForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
-        credentials: "include", // Important to send/receive cookies
       });
 
       const jsonResponse = await res.json();
@@ -31,14 +30,14 @@ export default function LoginForm() {
         throw new Error(jsonResponse.message || "Login failed");
       }
 
-      // NOTE: Do NOT store tokens in localStorage when using secure cookies
-      // You can optionally store user info here from response if needed, like:
-      // localStorage.setItem("username", jsonResponse.user.email);
-      // Or better, fetch user state from backend on app load
+      // ✅ STORE TOKEN IN LOCALSTORAGE
+      localStorage.setItem("accessToken", jsonResponse.accessToken);
 
-      // Fetch sidebar menus using backend to avoid storing auth token manually
-      const sidebarRes = await fetch(`/api/sidebar`, {
-        credentials: "include", // Include cookies for auth
+      // ✅ FETCH SIDEBAR WITH AUTH HEADER
+      const sidebarRes = await fetch(`${API_BASE_URL}/api/sidebar`, {
+        headers: {
+          Authorization: `Bearer ${jsonResponse.accessToken}`,
+        },
       });
 
       if (!sidebarRes.ok) throw new Error("Failed to fetch sidebar");
@@ -46,8 +45,6 @@ export default function LoginForm() {
       localStorage.setItem("sidebarMenus", JSON.stringify(menus));
 
       setLoading(false);
-
-      // Redirect to originally requested page or dashboard
       navigate(from, { replace: true });
     } catch (err) {
       setError(err.message);
