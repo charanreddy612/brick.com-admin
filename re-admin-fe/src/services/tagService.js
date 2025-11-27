@@ -4,7 +4,7 @@ import { API_BASE_URL } from "src/config/api";
 
 // Centralized axios instance
 const http = axios.create({
-  baseURL: `${API_BASE_URL}/api/tags`,
+  baseURL: `/api/tags`,
   headers: { "Content-Type": "application/json" },
 });
 
