@@ -25,16 +25,16 @@ export default function LoginForm() {
       });
 
       const jsonResponse = await res.json();
-
+      console.log("Login response:", jsonResponse);
       if (!res.ok) {
         throw new Error(jsonResponse.message || "Login failed");
       }
 
       // ✅ STORE TOKEN IN LOCALSTORAGE
       localStorage.setItem("accessToken", jsonResponse.accessToken);
-      localStorage.setItem("username", jsonResponse.user.email);
-      localStorage.setItem("userid", jsonResponse.user.id);
-      localStorage.setItem("role_id", jsonResponse.user.role_id);
+      localStorage.setItem("username", jsonResponse.user?.email);
+      localStorage.setItem("userid", jsonResponse.user?.id);
+      localStorage.setItem("role_id", jsonResponse.user?.role_id);
 
       // ✅ FETCH SIDEBAR WITH AUTH HEADER
       const sidebarRes = await fetch(`${API_BASE_URL}/api/sidebar`, {

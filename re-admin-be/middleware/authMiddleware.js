@@ -25,6 +25,7 @@ export function authenticateToken(req, res, next) {
       if (err) {
         return res.status(403).json({ message: "Invalid or expired token" });
       }
+      console.log("Decoded JWT payload:", user);
       req.user = user;
       next();
     });
