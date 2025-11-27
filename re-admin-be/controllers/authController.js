@@ -28,7 +28,7 @@ export async function login(req, res) {
     const payload = {
       userId: user.id,
       email: user.email,
-      role: user.role,
+      role_id: user.role_id,
     };
 
     const accessToken = jwt.sign(payload, JWT_SECRET, {
@@ -51,9 +51,6 @@ export async function login(req, res) {
 
 export function logout(req, res) {
   // TODO: Invalidate refresh token in DB if stored
-
-  res.clearCookie("accessToken", { path: "/" });
-  res.clearCookie("refreshToken", { path: "/" });
   res.json({ message: "Logged out successfully" });
 }
 
