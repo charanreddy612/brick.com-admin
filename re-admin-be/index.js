@@ -9,13 +9,10 @@ import sidebarRoutes from "./routes/sidebarRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import developerRoutes from "./routes/developerRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
-
-// Import new public projects routes
 import publicProjectsRoutes from "./routes/publicProjectsRoutes.js";
 import publicDevelopersRoutes from "./routes/publicDevelopersRoutes.js";
 
 dotenv.config();
-
 import { authenticateToken } from "./middleware/authMiddleware.js";
 
 const app = express();
@@ -38,20 +35,23 @@ app.use(
 
 app.options("/api/auth/login", cors());
 
+// ✅ 1. BODY PARSER FIRST - Parses JSON for auth/dashboard/sidebar
+app.use(express.json({ limit: process.env.JSON_LIMIT || "1mb" }));
+app.use(express.urlencoded({ extended: true }));
+
+// ✅ 2. JSON ROUTES - Need body-parser
 app.use("/api/auth", authRoutes);
 app.use("/api/sidebar", authenticateToken, sidebarRoutes);
 app.use("/api/dashboard", authenticateToken, dashboardRoutes);
 
-app.use(express.json({ limit: process.env.JSON_LIMIT || "1mb" }));
-app.use(express.urlencoded({ extended: true }));
-
+// ✅ 3. FORM DATA ROUTES LAST - Multer handles FormData
 app.use("/api/developers", authenticateToken, developerRoutes);
 app.use("/api/projects", authenticateToken, projectRoutes);
 
+// ✅ Static files
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
-
-// Mount new public projects routes
+// ✅ Public routes (JSON)
 app.use("/api/public/projects", publicProjectsRoutes);
 // app.use("/api/public/developers", publicDevelopersRoutes);
 
