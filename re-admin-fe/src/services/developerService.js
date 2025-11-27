@@ -16,7 +16,9 @@ export async function listDevelopers({
     params.set("page", String(page));
     params.set("limit", String(limit));
 
-    const res = await apiFetch(`${API_BASE_URL}/api/developers?${params.toString()}`);
+    const res = await apiFetch(
+      `${API_BASE_URL}/api/developers?${params.toString()}`
+    );
     return {
       data: Array.isArray(res.data?.data?.rows) ? res.data.data.rows : [],
       total: Number(res.data?.data?.total || 0),
@@ -40,8 +42,9 @@ export async function getDeveloper(id) {
 // Create (multipart)
 export async function addDeveloper(formData) {
   try {
-    const res = await http.post(`/developers`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+    const res = await apiFetch(`${API_BASE_URL}/api/developers`, {
+      method: "POST",
+      body: formData, // FormData - no Content-Type needed
     });
     return { data: res.data?.data ?? null, error: res.data?.error ?? null };
   } catch (err) {
@@ -52,8 +55,9 @@ export async function addDeveloper(formData) {
 // Update (multipart)
 export async function updateDeveloper(id, formData) {
   try {
-    const res = await http.put(`/developers/${id}`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+    const res = await apiFetch(`${API_BASE_URL}/api/developers/${id}`, {
+      method: "PUT",
+      body: formData,
     });
     return { data: res.data?.data ?? null, error: res.data?.error ?? null };
   } catch (err) {
@@ -64,7 +68,9 @@ export async function updateDeveloper(id, formData) {
 // Toggle active/inactive
 export async function toggleDeveloperStatus(id) {
   try {
-    const res = await http.patch(`/developers/${id}/status`);
+    const res = await apiFetch(`${API_BASE_URL}/api/developers/${id}/status`, {
+      method: "PATCH",
+    });
     return { data: res.data?.data ?? null, error: res.data?.error ?? null };
   } catch (err) {
     return { data: null, error: { message: err.message } };
@@ -74,7 +80,9 @@ export async function toggleDeveloperStatus(id) {
 // Delete
 export async function removeDeveloper(id) {
   try {
-    const res = await http.delete(`/developers/${id}`);
+    const res = await apiFetch(`${API_BASE_URL}/api/developers/${id}`, {
+      method: "DELETE",
+    });
     return { data: res.data?.data ?? null, error: res.data?.error ?? null };
   } catch (err) {
     return { data: null, error: { message: err.message } };
@@ -87,8 +95,9 @@ export async function uploadDeveloperImage(file) {
   fd.append("file", file);
 
   try {
-    const res = await http.post("/developers/upload", fd, {
-      headers: { "Content-Type": "multipart/form-data" },
+    const res = await apiFetch(`${API_BASE_URL}/api/developers/upload`, {
+      method: "POST",
+      body: fd,
     });
 
     if (res.data?.error) {

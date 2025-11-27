@@ -1,11 +1,6 @@
 // src/services/projectService.js
-import axios from "axios";
-import { API_BASE_URL } from "../config/api";
-
-const http = axios.create({
-  baseURL: `${API_BASE_URL}/api`,
-  withCredentials: true,
-});
+import { API_BASE_URL } from "../config/api.js";
+import { apiFetch } from "../utils/api.js";
 
 // --------------------------- LIST ---------------------------
 export async function listProjects({ title = "", page = 1, limit = 20 } = {}) {
@@ -15,7 +10,9 @@ export async function listProjects({ title = "", page = 1, limit = 20 } = {}) {
     params.set("page", String(page));
     params.set("limit", String(limit));
 
-    const res = await http.get(`/projects?${params.toString()}`);
+    const res = await apiFetch(
+      `${API_BASE_URL}/api/projects?${params.toString()}`
+    );
     return {
       data: Array.isArray(res.data?.data?.rows) ? res.data.data.rows : [],
       total: Number(res.data?.data?.total || 0),
@@ -29,7 +26,7 @@ export async function listProjects({ title = "", page = 1, limit = 20 } = {}) {
 // --------------------------- DETAIL ---------------------------
 export async function getProject(id) {
   try {
-    const res = await http.get(`/projects/${id}`);
+    const res = await apiFetch(`${API_BASE_URL}/api/projects/${id}`);
     return { data: res.data?.data ?? null, error: res.data?.error ?? null };
   } catch (err) {
     return { data: null, error: { message: err.message } };
@@ -39,8 +36,9 @@ export async function getProject(id) {
 // --------------------------- CREATE ---------------------------
 export async function addProject(formData) {
   try {
-    const res = await http.post(`/projects`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+    const res = await apiFetch(`${API_BASE_URL}/api/projects`, {
+      method: "POST",
+      body: formData, // FormData automatically sets Content-Type
     });
     return { data: res.data?.data ?? null, error: res.data?.error ?? null };
   } catch (err) {
@@ -51,8 +49,9 @@ export async function addProject(formData) {
 // --------------------------- UPDATE ---------------------------
 export async function updateProject(id, formData) {
   try {
-    const res = await http.put(`/projects/${id}`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+    const res = await apiFetch(`${API_BASE_URL}/api/projects/${id}`, {
+      method: "PUT",
+      body: formData,
     });
     return { data: res.data?.data ?? null, error: res.data?.error ?? null };
   } catch (err) {
@@ -63,8 +62,9 @@ export async function updateProject(id, formData) {
 // --------------------------- TOGGLE STATUS ---------------------------
 export async function toggleProjectStatus(id, activate) {
   try {
-    const res = await http.patch(`/projects/${id}/status`, {
-      active: activate,
+    const res = await apiFetch(`${API_BASE_URL}/api/projects/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ active: activate }),
     });
     return { data: res.data?.data ?? null, error: res.data?.error ?? null };
   } catch (err) {
@@ -75,7 +75,9 @@ export async function toggleProjectStatus(id, activate) {
 // --------------------------- DELETE ---------------------------
 export async function removeProject(id) {
   try {
-    const res = await http.delete(`/projects/${id}`);
+    const res = await apiFetch(`${API_BASE_URL}/api/projects/${id}`, {
+      method: "DELETE",
+    });
     return { data: res.data?.data ?? null, error: res.data?.error ?? null };
   } catch (err) {
     return { data: null, error: { message: err.message } };
@@ -88,8 +90,9 @@ export async function uploadHeroImage(file) {
   fd.append("hero_image", file);
 
   try {
-    const res = await http.post("/projects/upload/hero", fd, {
-      headers: { "Content-Type": "multipart/form-data" },
+    const res = await apiFetch(`${API_BASE_URL}/api/projects/upload/hero`, {
+      method: "POST",
+      body: fd,
     });
 
     if (res.data?.error)
@@ -107,8 +110,9 @@ export async function uploadProjectImages(files) {
   files.forEach((file) => fd.append("images", file));
 
   try {
-    const res = await http.post("/projects/upload/images", fd, {
-      headers: { "Content-Type": "multipart/form-data" },
+    const res = await apiFetch(`${API_BASE_URL}/api/projects/upload/images`, {
+      method: "POST",
+      body: fd,
     });
 
     if (res.data?.error)
@@ -126,9 +130,13 @@ export async function uploadProjectDocuments(files) {
   files.forEach((file) => fd.append("documents", file));
 
   try {
-    const res = await http.post("/projects/upload/documents", fd, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const res = await apiFetch(
+      `${API_BASE_URL}/api/projects/upload/documents`,
+      {
+        method: "POST",
+        body: fd,
+      }
+    );
 
     if (res.data?.error)
       throw new Error(
@@ -141,15 +149,20 @@ export async function uploadProjectDocuments(files) {
   }
 }
 
-// in projectService.js (example)
+// --------------------------- UPLOAD AMENITY IMAGE ---------------------------
 export async function uploadAmenityImage(file) {
   const fd = new FormData();
   fd.append("image", file);
   try {
-    const res = await http.post("/projects/upload/amenity-image", fd, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    if (res.data?.error) throw new Error(res.data.error.message || "Amenity image upload failed");
+    const res = await apiFetch(
+      `${API_BASE_URL}/api/projects/upload/amenity-image`,
+      {
+        method: "POST",
+        body: fd,
+      }
+    );
+    if (res.data?.error)
+      throw new Error(res.data.error.message || "Amenity image upload failed");
     return res.data?.data?.url ?? null;
   } catch (err) {
     console.error("Upload amenity image failed:", err);
