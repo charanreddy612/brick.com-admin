@@ -3,7 +3,6 @@ import dotenv from "dotenv";
 import cors from "cors";
 import path from "path";
 
-// Import existing routes
 import authRoutes from "./routes/authRoutes.js";
 import sidebarRoutes from "./routes/sidebarRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
@@ -35,30 +34,21 @@ app.use(
 
 app.options("/api/auth/login", cors());
 
-// // ✅ CRITICAL: Smart body-parser FIRST - skips multipart for multer
-// app.use((req, res, next) => {
-//   if (req.headers["content-type"]?.includes("multipart/form-data")) {
-//     return next(); // Let multer handle FormData
-//   }
-//   express.json({ limit: process.env.JSON_LIMIT || "1mb" })(req, res, next);
-// });
-// app.use(express.urlencoded({ extended: true }));
+// ✅ BODY PARSER ONLY FOR JSON ROUTES
+app.use(express.json({ limit: process.env.JSON_LIMIT || "1mb" }));
+app.use(express.urlencoded({ extended: true }));
 
-// ✅ 1. JSON ROUTES FIRST - Need body-parser (login, dashboard, etc.)
+// ✅ JSON ROUTES (login, dashboard, sidebar)
 app.use("/api/auth", authRoutes);
 app.use("/api/sidebar", authenticateToken, sidebarRoutes);
 app.use("/api/dashboard", authenticateToken, dashboardRoutes);
 
-// ✅ 2. FORM DATA ROUTES LAST - Multer handles FormData
+// ✅ FORM DATA ROUTES - Multer inside routes handles parsing
 app.use("/api/developers", authenticateToken, developerRoutes);
 app.use("/api/projects", authenticateToken, projectRoutes);
 
-// ✅ Static files
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
-
-// ✅ Public routes (JSON)
 app.use("/api/public/projects", publicProjectsRoutes);
-// app.use("/api/public/developers", publicDevelopersRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to Brick.com Admin Backend" });
