@@ -10,8 +10,11 @@ export async function listProjects({ title = "", page = 1, limit = 20 } = {}) {
     params.set("page", String(page));
     params.set("limit", String(limit));
 
+    const queryString = params.toString();
+    console.log("QUERY STRING:", queryString);  // Should be: "page=1&limit=20"
+
     const res = await apiFetch(
-      `${API_BASE_URL}/api/projects?${params.toString()}`
+      `${API_BASE_URL}/api/projects?${queryString}`
     );
     const data = await res.json(); // ✅ PARSE JSON
 
@@ -21,6 +24,7 @@ export async function listProjects({ title = "", page = 1, limit = 20 } = {}) {
       error: data?.error || null,
     };
   } catch (err) {
+    console.error("LIST PROJECTS ERROR:", err);
     return { data: [], total: 0, error: { message: err.message } };
   }
 }

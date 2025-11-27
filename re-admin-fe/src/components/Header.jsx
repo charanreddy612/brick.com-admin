@@ -6,7 +6,7 @@ export default function Header({
   isSidebarCollapsed,
 }) {
   const handleLogout = () => {
-    localStorage.removeItem("authToken"); // Clear stored login
+    localStorage.removeItem("accessToken"); // Clear stored login
     window.location.href = "/"; // Redirect to login page
   };
   const [username, setUsername] = useState("");
@@ -14,6 +14,8 @@ export default function Header({
     const storedUsername = localStorage.getItem("username");
     if (storedUsername) {
       setUsername(storedUsername);
+    } else {
+      setUsername("Admin");
     }
   }, []);
 
