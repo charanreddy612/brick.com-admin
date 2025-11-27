@@ -13,10 +13,12 @@ export async function listProjects({ title = "", page = 1, limit = 20 } = {}) {
     const res = await apiFetch(
       `${API_BASE_URL}/api/projects?${params.toString()}`
     );
+    const data = await res.json(); // ✅ PARSE JSON
+
     return {
-      data: Array.isArray(res.data?.data?.rows) ? res.data.data.rows : [],
-      total: Number(res.data?.data?.total || 0),
-      error: res.data?.error || null,
+      data: Array.isArray(data?.data?.rows) ? data.data.rows : [],
+      total: Number(data?.data?.total || 0),
+      error: data?.error || null,
     };
   } catch (err) {
     return { data: [], total: 0, error: { message: err.message } };
@@ -27,7 +29,8 @@ export async function listProjects({ title = "", page = 1, limit = 20 } = {}) {
 export async function getProject(id) {
   try {
     const res = await apiFetch(`${API_BASE_URL}/api/projects/${id}`);
-    return { data: res.data?.data ?? null, error: res.data?.error ?? null };
+    const data = await res.json(); // ✅ PARSE JSON
+    return { data: data?.data ?? null, error: data?.error ?? null };
   } catch (err) {
     return { data: null, error: { message: err.message } };
   }
@@ -38,9 +41,10 @@ export async function addProject(formData) {
   try {
     const res = await apiFetch(`${API_BASE_URL}/api/projects`, {
       method: "POST",
-      body: formData, // FormData automatically sets Content-Type
+      body: formData,
     });
-    return { data: res.data?.data ?? null, error: res.data?.error ?? null };
+    const data = await res.json(); // ✅ PARSE JSON
+    return { data: data?.data ?? null, error: data?.error ?? null };
   } catch (err) {
     return { data: null, error: { message: err.message } };
   }
@@ -53,7 +57,8 @@ export async function updateProject(id, formData) {
       method: "PUT",
       body: formData,
     });
-    return { data: res.data?.data ?? null, error: res.data?.error ?? null };
+    const data = await res.json(); // ✅ PARSE JSON
+    return { data: data?.data ?? null, error: data?.error ?? null };
   } catch (err) {
     return { data: null, error: { message: err.message } };
   }
@@ -66,7 +71,8 @@ export async function toggleProjectStatus(id, activate) {
       method: "PATCH",
       body: JSON.stringify({ active: activate }),
     });
-    return { data: res.data?.data ?? null, error: res.data?.error ?? null };
+    const data = await res.json(); // ✅ PARSE JSON
+    return { data: data?.data ?? null, error: data?.error ?? null };
   } catch (err) {
     return { data: null, error: { message: err.message } };
   }
@@ -78,7 +84,8 @@ export async function removeProject(id) {
     const res = await apiFetch(`${API_BASE_URL}/api/projects/${id}`, {
       method: "DELETE",
     });
-    return { data: res.data?.data ?? null, error: res.data?.error ?? null };
+    const data = await res.json(); // ✅ PARSE JSON
+    return { data: data?.data ?? null, error: data?.error ?? null };
   } catch (err) {
     return { data: null, error: { message: err.message } };
   }
@@ -94,10 +101,11 @@ export async function uploadHeroImage(file) {
       method: "POST",
       body: fd,
     });
+    const data = await res.json(); // ✅ PARSE JSON
 
-    if (res.data?.error)
-      throw new Error(res.data.error.message || "Hero image upload failed");
-    return res.data?.data?.url ?? null;
+    if (data?.error)
+      throw new Error(data.error.message || "Hero image upload failed");
+    return data?.data?.url ?? null;
   } catch (err) {
     console.error("Upload hero image failed:", err);
     throw err;
@@ -114,10 +122,11 @@ export async function uploadProjectImages(files) {
       method: "POST",
       body: fd,
     });
+    const data = await res.json(); // ✅ PARSE JSON
 
-    if (res.data?.error)
-      throw new Error(res.data.error.message || "Project images upload failed");
-    return res.data?.data ?? [];
+    if (data?.error)
+      throw new Error(data.error.message || "Project images upload failed");
+    return data?.data ?? [];
   } catch (err) {
     console.error("Upload project images failed:", err);
     throw err;
@@ -137,12 +146,11 @@ export async function uploadProjectDocuments(files) {
         body: fd,
       }
     );
+    const data = await res.json(); // ✅ PARSE JSON
 
-    if (res.data?.error)
-      throw new Error(
-        res.data.error.message || "Project documents upload failed"
-      );
-    return res.data?.data ?? [];
+    if (data?.error)
+      throw new Error(data.error.message || "Project documents upload failed");
+    return data?.data ?? [];
   } catch (err) {
     console.error("Upload project documents failed:", err);
     throw err;
@@ -161,9 +169,10 @@ export async function uploadAmenityImage(file) {
         body: fd,
       }
     );
-    if (res.data?.error)
-      throw new Error(res.data.error.message || "Amenity image upload failed");
-    return res.data?.data?.url ?? null;
+    const data = await res.json(); // ✅ PARSE JSON
+    if (data?.error)
+      throw new Error(data.error.message || "Amenity image upload failed");
+    return data?.data?.url ?? null;
   } catch (err) {
     console.error("Upload amenity image failed:", err);
     throw err;

@@ -19,10 +19,12 @@ export async function listDevelopers({
     const res = await apiFetch(
       `${API_BASE_URL}/api/developers?${params.toString()}`
     );
+    const data = await res.json(); // ✅ PARSE JSON
+
     return {
-      data: Array.isArray(res.data?.data?.rows) ? res.data.data.rows : [],
-      total: Number(res.data?.data?.total || 0),
-      error: res.data?.error || null,
+      data: Array.isArray(data?.data?.rows) ? data.data.rows : [],
+      total: Number(data?.data?.total || 0),
+      error: data?.error || null,
     };
   } catch (err) {
     return { data: [], total: 0, error: { message: err.message } };
@@ -33,7 +35,8 @@ export async function listDevelopers({
 export async function getDeveloper(id) {
   try {
     const res = await apiFetch(`${API_BASE_URL}/api/developers/${id}`);
-    return res.data?.data ?? null;
+    const data = await res.json(); // ✅ PARSE JSON
+    return data?.data ?? null;
   } catch (err) {
     return null;
   }
@@ -44,9 +47,10 @@ export async function addDeveloper(formData) {
   try {
     const res = await apiFetch(`${API_BASE_URL}/api/developers`, {
       method: "POST",
-      body: formData, // FormData - no Content-Type needed
+      body: formData,
     });
-    return { data: res.data?.data ?? null, error: res.data?.error ?? null };
+    const data = await res.json(); // ✅ PARSE JSON
+    return { data: data?.data ?? null, error: data?.error ?? null };
   } catch (err) {
     return { data: null, error: { message: err.message } };
   }
@@ -59,7 +63,8 @@ export async function updateDeveloper(id, formData) {
       method: "PUT",
       body: formData,
     });
-    return { data: res.data?.data ?? null, error: res.data?.error ?? null };
+    const data = await res.json(); // ✅ PARSE JSON
+    return { data: data?.data ?? null, error: data?.error ?? null };
   } catch (err) {
     return { data: null, error: { message: err.message } };
   }
@@ -71,7 +76,8 @@ export async function toggleDeveloperStatus(id) {
     const res = await apiFetch(`${API_BASE_URL}/api/developers/${id}/status`, {
       method: "PATCH",
     });
-    return { data: res.data?.data ?? null, error: res.data?.error ?? null };
+    const data = await res.json(); // ✅ PARSE JSON
+    return { data: data?.data ?? null, error: data?.error ?? null };
   } catch (err) {
     return { data: null, error: { message: err.message } };
   }
@@ -83,7 +89,8 @@ export async function removeDeveloper(id) {
     const res = await apiFetch(`${API_BASE_URL}/api/developers/${id}`, {
       method: "DELETE",
     });
-    return { data: res.data?.data ?? null, error: res.data?.error ?? null };
+    const data = await res.json(); // ✅ PARSE JSON
+    return { data: data?.data ?? null, error: data?.error ?? null };
   } catch (err) {
     return { data: null, error: { message: err.message } };
   }
@@ -99,12 +106,13 @@ export async function uploadDeveloperImage(file) {
       method: "POST",
       body: fd,
     });
+    const data = await res.json(); // ✅ PARSE JSON
 
-    if (res.data?.error) {
-      throw new Error(res.data.error.message || "Image upload failed");
+    if (data?.error) {
+      throw new Error(data.error.message || "Image upload failed");
     }
 
-    return res.data.url; // backend returns { url }
+    return data.url; // backend returns { url }
   } catch (err) {
     console.error("Upload developer logo failed:", err);
     throw err;
