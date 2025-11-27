@@ -16,7 +16,7 @@ export default function AppRouter() {
 
   useEffect(() => {
     setIsClient(true);
-    const token = localStorage.getItem("authToken");
+    const token = localStorage.getItem("accessToken");
     setIsAuthenticated(Boolean(token));
   }, []);
 

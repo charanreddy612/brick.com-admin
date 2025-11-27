@@ -31,9 +31,9 @@ export default function LoginForm() {
         throw new Error(jsonResponse.message || "Login failed");
       }
 
-      // After login success, test profile:
-      const profileRes = await apiFetch(`${API_BASE_URL}/api/auth/profile`);
-      console.log("Profile test:", await profileRes.json());
+      // // After login success, test profile:
+      // const profileRes = await apiFetch(`${API_BASE_URL}/api/auth/profile`);
+      // console.log("Profile test:", await profileRes.json());
 
       // ✅ STORE TOKEN IN LOCALSTORAGE
       localStorage.setItem("accessToken", jsonResponse.accessToken);
