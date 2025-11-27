@@ -39,9 +39,17 @@ app.options("/api/auth/login", cors());
 app.use("/api/developers", authenticateToken, developerRoutes);
 app.use("/api/projects", authenticateToken, projectRoutes);
 
+// // ✅ 1. BODY PARSER FIRST - Parses JSON for auth/dashboard/sidebar
+// app.use(express.json({ limit: process.env.JSON_LIMIT || "1mb" }));
+// app.use(express.urlencoded({ extended: true }));
 
-// ✅ 1. BODY PARSER FIRST - Parses JSON for auth/dashboard/sidebar
-app.use(express.json({ limit: process.env.JSON_LIMIT || "1mb" }));
+// Skip body-parser for multipart, parse JSON for others
+app.use((req, res, next) => {
+  if (req.headers["content-type"]?.includes("multipart/form-data")) {
+    return next(); // Let multer handle FormData
+  }
+  express.json({ limit: process.env.JSON_LIMIT || "1mb" })(req, res, next);
+});
 app.use(express.urlencoded({ extended: true }));
 
 // ✅ 2. JSON ROUTES - Need body-parser
