@@ -18,9 +18,8 @@ type SeoMeta = {
   jsonLd: any;
 };
 
-const API_BASE = "https://brick-com-admin.onrender.com";
-
 export async function getStaticPaths() {
+  const API_BASE = "https://brick-com-admin.onrender.com";
   try {
     const res = await fetch(`${API_BASE}/api/public/projects?status=true&limit=1000`);
     if (!res.ok) throw new Error(`Failed to fetch project slugs for static paths`);
@@ -52,6 +51,7 @@ let seoMeta: SeoMeta = {
   canonical: "",
   jsonLd: {},
 };
+const API_BASE = "https://brick-com-admin.onrender.com";
 
 try {
   const response = await fetch(`${API_BASE}/api/public/projects/${slug}`);
