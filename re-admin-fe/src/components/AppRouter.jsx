@@ -42,7 +42,7 @@ export default function AppRouter() {
           <Route path="summary" element={<DashboardSummary />} />
 
           {/* Real Estate Routes */}
-          {/* <Route path="developers" element={<DevelopersListPage />} /> */}
+          <Route path="developers" element={<DevelopersListPage />} />
           <Route path="projects" element={<ProjectsListPage />} />
         </Route>
 
