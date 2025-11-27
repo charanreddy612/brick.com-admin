@@ -1,4 +1,3 @@
-// services/projectService.js (new file)
 import { supabase } from "../dbhelper/dbclient.js";
 
 export async function listProjectsData({
@@ -7,8 +6,8 @@ export async function listProjectsData({
   page = 1,
   title = "",
 } = {}) {
-  const from = (page - 1) * limit;
-  const to = from + limit - 1;
+  const from = (Number(page) - 1) * Number(limit);
+  const to = from + Number(limit) - 1;
 
   const selectCols = `
     id, title, slug, description, category_id, location,
@@ -16,23 +15,34 @@ export async function listProjectsData({
     hero_image, images, documents, created_at, updated_at
   `;
 
+  // COUNT QUERY
   let countQuery = supabase
     .from("projects")
     .select("id", { count: "exact", head: true });
 
-  if (title) countQuery = countQuery.ilike("title", `%${title}%`);
-  if (status !== undefined) countQuery = countQuery.eq("status", status);
+  if (title && title.trim() !== "") {
+    countQuery = countQuery.ilike("title", `%${title}%`);
+  }
+  if (status !== undefined && status !== null && status !== "") {
+    countQuery = countQuery.eq("status", status);
+  }
 
   const { count, error: countErr } = await countQuery;
   if (countErr) throw countErr;
 
+  // DATA QUERY
   let query = supabase
     .from("projects")
     .select(selectCols)
     .order("created_at", { ascending: false })
     .range(from, to);
-  if (title) query = query.ilike("title", `%${title}%`);
-  if (status !== undefined) query = query.eq("status", status);
+
+  if (title && title.trim() !== "") {
+    query = query.ilike("title", `%${title}%`);
+  }
+  if (status !== undefined && status !== null && status !== "") {
+    query = query.eq("status", status);
+  }
 
   const { data, error } = await query;
   if (error) throw error;
