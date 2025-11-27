@@ -1,11 +1,6 @@
 // src/services/developerService.js
-import axios from "axios";
-import { API_BASE_URL } from "../config/api";
-
-const http = axios.create({
-  baseURL: `${API_BASE_URL}/api`,
-  withCredentials: true,
-});
+import { API_BASE_URL } from "../config/api.js";
+import { apiFetch } from "../utils/api.js";
 
 // List with filters + pagination
 export async function listDevelopers({
@@ -21,7 +16,7 @@ export async function listDevelopers({
     params.set("page", String(page));
     params.set("limit", String(limit));
 
-    const res = await http.get(`/developers?${params.toString()}`);
+    const res = await apiFetch(`${API_BASE_URL}/api/developers?${params.toString()}`);
     return {
       data: Array.isArray(res.data?.data?.rows) ? res.data.data.rows : [],
       total: Number(res.data?.data?.total || 0),
@@ -35,7 +30,7 @@ export async function listDevelopers({
 // Detail
 export async function getDeveloper(id) {
   try {
-    const res = await http.get(`/developers/${id}`);
+    const res = await apiFetch(`${API_BASE_URL}/api/developers/${id}`);
     return res.data?.data ?? null;
   } catch (err) {
     return null;
