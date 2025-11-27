@@ -69,9 +69,19 @@ export async function getProject(req, res) {
 // Create
 export async function createProject(req, res) {
   console.info("createProject called, body:", req.body);
+  console.info("createProject called, files:", req.files);
+
   try {
     const b = req.body || {};
-    const f = req.file; // multer.single("hero_image")
+    // ✅ For .fields() or .any():
+    const f = req.files?.hero_image?.[0] || req.file;
+
+    if (!b.title || b.title.trim() === "") {
+      return res.status(400).json({
+        data: null,
+        error: { message: "Project title is required" },
+      });
+    }
     const toInsert = {
       title: b.title,
       slug: b.slug,

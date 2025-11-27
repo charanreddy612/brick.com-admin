@@ -11,9 +11,15 @@ router.get("/", projectController.listProjects);
 router.get("/:id", projectController.getProject);
 
 // Create project (multipart for files)
+// router.post(
+//   "/",
+//   uploadMemory.single("hero_image"),
+//   projectController.createProject
+// );
+
 router.post(
   "/",
-  uploadMemory.single("hero_image"),
+  uploadMemory.fields([{ name: "hero_image", maxCount: 1 }]),
   projectController.createProject
 );
 
