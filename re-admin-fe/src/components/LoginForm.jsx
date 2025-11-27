@@ -37,7 +37,7 @@ export default function LoginForm() {
       // Or better, fetch user state from backend on app load
 
       // Fetch sidebar menus using backend to avoid storing auth token manually
-      const sidebarRes = await fetch(`${API_BASE_URL}/api/sidebar`, {
+      const sidebarRes = await fetch(`/api/sidebar`, {
         credentials: "include", // Include cookies for auth
       });
 
