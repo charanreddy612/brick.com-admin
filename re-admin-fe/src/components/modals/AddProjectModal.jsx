@@ -135,8 +135,9 @@ export default function AddProjectModal({ onClose, onSave }) {
     if (form.hero_image) fd.append("hero_image", form.hero_image);
 
     try {
-      const { error } = await addProject(fd);
-      if (error) throw new Error(error.message || "Add project failed");
+      const result = await addProject(fd);
+      if (result.error)
+        throw new Error(result.error.message || "Add project failed");
       onSave?.();
       onClose?.();
     } catch (err) {
