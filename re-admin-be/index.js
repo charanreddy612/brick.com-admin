@@ -35,14 +35,14 @@ app.use(
 
 app.options("/api/auth/login", cors());
 
-// ✅ CRITICAL: Smart body-parser FIRST - skips multipart for multer
-app.use((req, res, next) => {
-  if (req.headers["content-type"]?.includes("multipart/form-data")) {
-    return next(); // Let multer handle FormData
-  }
-  express.json({ limit: process.env.JSON_LIMIT || "1mb" })(req, res, next);
-});
-app.use(express.urlencoded({ extended: true }));
+// // ✅ CRITICAL: Smart body-parser FIRST - skips multipart for multer
+// app.use((req, res, next) => {
+//   if (req.headers["content-type"]?.includes("multipart/form-data")) {
+//     return next(); // Let multer handle FormData
+//   }
+//   express.json({ limit: process.env.JSON_LIMIT || "1mb" })(req, res, next);
+// });
+// app.use(express.urlencoded({ extended: true }));
 
 // ✅ 1. JSON ROUTES FIRST - Need body-parser (login, dashboard, etc.)
 app.use("/api/auth", authRoutes);
